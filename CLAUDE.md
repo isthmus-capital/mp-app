@@ -1,0 +1,74 @@
+# CLAUDE.md — mp-app (Micropréstamos Isthmus Capital)
+<!-- Paquete: v5 — 01-oct-2026 -->
+
+## Qué es esto
+Plataforma de micropréstamos por descuento directo para **Financiera Isthmus Capital (FIC), Panamá**.
+Tres portales en una sola app Next.js 14: `/cliente` (colaborador, PWA), `/afiliado` (RRHH de la empresa), `/admin` (FIC).
+Reemplaza el proceso actual de Zoho Creator + Zoho Flow + Monday, que corre en paralelo hasta el Brief 19.
+
+**Lee `docs/00_PROMPT_MAESTRO.md` completo antes de cualquier brief.** Las decisiones de su §13 son vinculantes.
+
+## Reglas de trabajo
+- Un brief a la vez, desde `docs/briefs/NN_*.md`. No empieces el siguiente sin `git commit` y pruebas ejecutadas del anterior.
+- **Modo aprobación manual** obligatorio en: fórmulas financieras, transiciones de estado, firmas, desembolsos BG, migraciones de Supabase, cualquier llamada a producción.
+- Nunca asumas nombres de campos: verifica con los MCP (Zoho CRM, Supabase, n8n) antes de escribir código. El nombre visible en la UI de Zoho **no** es el API name.
+- Si un dato de negocio no está en el Prompt Maestro, pregunta. No inventes tasas, plazos ni IDs.
+- Tests antes que implementación en el motor de reglas, cálculo de letra y transiciones de estado.
+- Verifica antes de decir "listo": corre el comando, lee la salida, muestra la evidencia.
+
+## Arquitectura (resumen)
+- **Supabase** (`isthmus-mp`): estado operativo, auth, auditoría. La app nunca llama a Zoho en el request path del cliente.
+- **Zoho CRM**: expediente oficial. Si difiere de Supabase, **gana CRM**; `mp_reconcile_crm` corrige de noche.
+- **N8N** (`automation.isthmuscap.com`): único orquestador. Zoho Flow queda retirado.
+- **WorkDrive** archivos · **Sign** firma · **LoanDisk** core · **BG H2H** desembolso · **IDAnalyzer** KYC · **Meta WhatsApp** mensajería.
+- Todo proveedor externo va detrás de un adaptador en `lib/` (`kyc/`, `signing/`, `core/`, `banking/`, `messaging/`, `storage/`). Ninguna ruta llama a un proveedor directamente.
+- SQL hace la aritmética; Claude interpreta y resume; N8N mueve datos; Next.js muestra y captura. Cero lógica financiera en el frontend.
+
+## Trazabilidad
+El **NUC** (Número Único de Cliente) es la llave de todo. Nunca crear cliente sin NUC ni dos NUC para la misma cédula. Alta solo por `ensure_cliente(cedula)`.
+
+## Estructura
+```
+mp-app/
+  app/(cliente|afiliado|admin)/...
+  app/api/...
+  lib/{kyc,signing,core,banking,messaging,storage,rules}/
+  supabase/migrations/
+  docs/00_PROMPT_MAESTRO.md
+  docs/briefs/NN_*.md
+  docs/design/
+  styles/tokens.css
+  tests/
+```
+
+## Comandos
+```bash
+docker compose up -d --build mp-app      # build y deploy local/VPS (puerto 3003)
+npm run test                              # unitarios (reglas, letra, transiciones)
+npm run test:e2e                          # Playwright (wizard móvil + escritorio)
+supabase gen types typescript --project-id <id> > lib/db/types.ts
+```
+
+## MCPs y skills
+- **MCPs:** Supabase, n8n, Zoho CRM (data / data-operations / insights), Zoho WorkDrive, Zoho Sign, Gmail. Monday solo lectura durante la migración del flujo BG.
+- **Skills:** `supabase:supabase`, `supabase:supabase-postgres-best-practices`, `superpowers:brainstorming` (antes de cada brief nuevo), `superpowers:writing-plans`, `superpowers:test-driven-development`, `superpowers:systematic-debugging`, `superpowers:verification-before-completion`, `frontend-design`, `operations:runbook`.
+
+## Prohibido (sin excepción)
+- **Banco General**: `lib/banking` usa `bg_ambiente`. Staging y toda prueba = `qa` (06 QA `EQOqUBQp1N60zFlG`, cuenta de certificación). `prod` (06 `GTFFlEfXa0LOTtnF`) solo con aprobación explícita de Gianclaudio y Diego. Nunca modificar el 06 prod.
+- Nunca escribir tokens, llaves ni contraseñas en el repo, briefs, logs o documentos. Solo `.env` del servidor y credenciales de N8N.
+- Nunca modificar workflows N8N ni registros de Zoho en producción sin mostrar antes el cambio y recibir aprobación.
+- Nada financiero fijo en el código: montos, plazos, tasas, fees y límites se leen de los parámetros (§4.4 del Prompt Maestro).
+
+## Gotchas heredados
+- LoanDisk: producto 383523, ciclos 4646 (10-25) y 4418 (15-30). Nunca el ciclo Bimonthly (12). Ver §18.
+- Correos MP solo desde gestionprestamos@ (credencial N8N `l3e9P4UxBqKXKir4`).
+- Préstamos de prueba en LoanDisk: nunca con números SO ni en secuencia.
+- Credenciales Zoho en N8N: `V8ToVmg60xSjZasl` para workflows sin WorkDrive; `lRBD9utZoqJjYHEW` cuando hay nodos WorkDrive (Token Expired Status Code = 500).
+- Zoho Flow/WorkDrive solo alcanza el Team Folder **General**.
+- Nunca `neverError: true` en nodos que llaman APIs externas.
+- Después de tocar un workflow: `update_workflow` + `publish_workflow` y verificar `activeVersionId` con `get_workflow_details`.
+- Supabase: GRANTs explícitos por tabla, RLS activa en todo, service role solo en servidor.
+- Todo webhook entrante se registra en `webhook_inbox` con `idempotency_key` antes de procesar.
+
+## Marca
+`--fic-azul #193A76` · `--fic-azul-claro #66A5E6`. Sobrio, sin gradientes. Detalle en §15 del Prompt Maestro.
