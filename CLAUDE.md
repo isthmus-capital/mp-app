@@ -45,6 +45,7 @@ mp-app/
 ## Comandos
 ```bash
 docker compose up -d --build mp-app      # build y deploy local/VPS (puerto 3003)
+docker compose up -d --build mp-app-staging  # staging (puerto 3013, /etc/mp-app/staging.env)
 npm run test                              # unitarios (reglas, letra, transiciones)
 npm run test:e2e                          # Playwright (wizard móvil + escritorio)
 supabase gen types typescript --project-id <id> > lib/db/types.ts
@@ -56,7 +57,7 @@ supabase gen types typescript --project-id <id> > lib/db/types.ts
 
 ## Prohibido (sin excepción)
 - **Banco General**: `lib/banking` usa `bg_ambiente`. Staging y toda prueba = `qa` (06 QA `EQOqUBQp1N60zFlG`, cuenta de certificación). `prod` (06 `GTFFlEfXa0LOTtnF`) solo con aprobación explícita de Gianclaudio y Diego. Nunca modificar el 06 prod.
-- Nunca escribir tokens, llaves ni contraseñas en el repo, briefs, logs o documentos. Solo `.env` del servidor y credenciales de N8N.
+- Nunca escribir tokens, llaves ni contraseñas en el repo, briefs, logs o documentos. Solo `/etc/mp-app/*.env` del servidor (640 root:deploy) y credenciales de N8N.
 - Nunca modificar workflows N8N ni registros de Zoho en producción sin mostrar antes el cambio y recibir aprobación.
 - **N8N se lee solo por el MCP** (herramientas de lectura: `get_workflow_details`, `list_credentials`, `search_workflows`, `search_workflow_executions`, `get_workflow_execution`). **Prohibido acceder a la base de datos, al contenedor o a los archivos de n8n** en el VPS, por cualquier vía. Nunca `execute_workflow`, `test_workflow`, `prepare_workflow_pin_data` ni publicar/archivar sin aprobación explícita; el 06 prod no se ejecuta ni se modifica jamás.
 - Nada financiero fijo en el código: montos, plazos, tasas, fees y límites se leen de los parámetros (§4.4 del Prompt Maestro).

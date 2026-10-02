@@ -1,0 +1,7 @@
+[Unit]
+Description=Sonda /api/health cada 5 min (activar en Brief 02)
+[Timer]
+OnCalendar=*:0/5
+Persistent=false
+[Install]
+WantedBy=timers.target

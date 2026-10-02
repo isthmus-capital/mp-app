@@ -1,0 +1,10 @@
+[Unit]
+Description=Backup diario del VPS con restic (Brief 01)
+After=docker.service network-online.target
+Wants=network-online.target
+OnFailure=mp-alert@backup.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mp-backup.sh
+Nice=10
+IOSchedulingClass=idle

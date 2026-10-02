@@ -1,0 +1,41 @@
+# mp-app — Brief 01. El Dockerfile lo crea el Brief 02 (Next.js standalone, puerto interno 3000).
+# Producción 127.0.0.1:3003 y staging 127.0.0.1:3013; Caddy hace el TLS. Secretos en /etc/mp-app/*.env.
+x-mp-common: &mp-common
+  build: .
+  restart: unless-stopped
+  init: true
+  healthcheck:
+    test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 30s
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+  networks: [n8n_default]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  mp-app:
+    <<: *mp-common
+    image: mp-app:prod
+    container_name: mp-app
+    ports: ["127.0.0.1:3003:3000"]
+    env_file: [/etc/mp-app/production.env]
+    deploy:
+      resources:
+        limits: { memory: 768M }
+  mp-app-staging:
+    <<: *mp-common
+    image: mp-app:staging
+    container_name: mp-app-staging
+    ports: ["127.0.0.1:3013:3000"]
+    env_file: [/etc/mp-app/staging.env]
+    deploy:
+      resources:
+        limits: { memory: 512M }
+
+networks:
+  n8n_default:
+    external: true

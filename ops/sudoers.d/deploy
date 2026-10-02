@@ -1,0 +1,11 @@
+# deploy: operaciones rutinarias sin contraseña (MP_OPS); todo lo demás pide contraseña.
+# El orden importa: la línea NOPASSWD va al final para que prevalezca sobre la general.
+Cmnd_Alias MP_OPS = /usr/bin/systemctl reload caddy, /usr/bin/systemctl restart caddy, /usr/bin/systemctl status caddy, \
+  /usr/bin/caddy validate --config /etc/caddy/Caddyfile, \
+  /usr/bin/systemctl start mp-backup.service, /usr/bin/systemctl status mp-backup.service, /usr/bin/systemctl status mp-backup.timer, \
+  /usr/bin/systemctl start mp-healthcheck.service, /usr/bin/systemctl status mp-healthcheck.service, /usr/bin/systemctl status mp-healthcheck.timer, \
+  /usr/bin/journalctl -u caddy *, /usr/bin/journalctl -u mp-backup.service *, /usr/bin/journalctl -u mp-healthcheck.service *, /usr/bin/journalctl -u fail2ban *, \
+  /usr/sbin/ufw status *, /usr/sbin/iptables -S DOCKER-USER, /usr/bin/fail2ban-client status, /usr/bin/fail2ban-client status sshd, \
+  /usr/local/bin/mp-restore-test.sh, /usr/bin/restic snapshots *, /usr/bin/restic stats *
+deploy ALL=(ALL) ALL
+deploy ALL=(ALL) NOPASSWD: MP_OPS

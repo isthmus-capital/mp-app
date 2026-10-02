@@ -1,0 +1,8 @@
+[Unit]
+Description=Backup diario a las 03:00 Panamá (08:00 UTC)
+[Timer]
+OnCalendar=*-*-* 08:00:00 UTC
+RandomizedDelaySec=10m
+Persistent=true
+[Install]
+WantedBy=timers.target

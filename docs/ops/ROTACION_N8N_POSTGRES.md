@@ -4,7 +4,7 @@
 
 **Motivo.** El 02-oct-2026 la contraseña vigente del Postgres de n8n apareció en la salida de una herramienta de la sesión de Claude Code (lectura indebida del compose de n8n). No se copió a ningún archivo, documento ni memoria, pero debe tratarse como expuesta y rotarse. En esa misma salida se mostraron los valores de `AUTOPAL_COMPANY` y `AUTOPAL_USER` (no `AUTOPAL_KEY`, que sí quedó enmascarada); evalúa si esos dos valores son secretos de esa integración y, si lo son, rótalos con el proveedor. `N8N_ENCRYPTION_KEY` y `N8N_BASIC_AUTH_PASSWORD` quedaron enmascaradas y no requieren rotación por este motivo.
 
-**Cuándo.** Ventana de las 22:00 Panamá (03:00 UTC) del 02/03-oct, antes del reinicio del VPS. n8n queda fuera de servicio ~1 minuto (recreación de su contenedor). Postgres no se detiene.
+**Cuándo.** **Ventana de fin de semana** (decisión de Gianclaudio, 02-oct-2026): no va en el reinicio del 02-oct. n8n queda fuera de servicio ~1 minuto (recreación de su contenedor). Postgres no se detiene. En la misma ventana conviene hacer la actualización de paquetes pendiente (`docker-ce`, `containerd.io`, `caddy` y el resto), porque reinicia el daemon de Docker y todos los contenedores; ver la sección final.
 
 **Quién.** Gianclaudio, como `root` en el VPS (o `deploy` con `sudo -i`). Los comandos van en tu terminal, nunca en el chat.
 
@@ -99,6 +99,21 @@ docker compose -f /opt/n8n/docker-compose.yml up -d --no-deps --force-recreate n
 
 Y repetir el paso 5. Si el problema es otro (por ejemplo la base no arranca), restaurar el dump del paso 0 es el último recurso: `docker exec -i n8n-postgres-1 pg_restore -U n8n -d n8n --clean --if-exists < /root/backups/n8n-pre-rotacion-<fecha>.dump`.
 
+## Misma ventana: actualización de paquetes (docker-ce, containerd.io, caddy y resto)
+
+Al 02-oct-2026 hay 26 paquetes pendientes; `docker-ce`, `containerd.io` y los plugins de Compose reinician el daemon de Docker (y con él todos los contenedores, ~1 min), por eso no se hicieron en el reinicio del 02-oct. Después de verificar la rotación (paso 5) y antes de salir de la ventana:
+
+```bash
+/opt/mp-app/scripts/ops/check-services.sh pre-upgrade
+apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade && apt-get -y autoremove --purge
+docker ps --format '{{.Names}} {{.Status}}'        # los 5 contenedores deben volver solos (restart policies)
+/opt/mp-app/scripts/ops/check-services.sh post-upgrade
+ls /var/run/reboot-required 2>/dev/null && echo "pide reinicio: repetir el checklist de reinicio" || echo "sin reinicio pendiente"
+iptables -S DOCKER-USER | grep -c DROP            # debe seguir en 1 (Docker no vacía DOCKER-USER al reiniciar)
+```
+
+Si el daemon de Docker se reinicia y algún contenedor no vuelve: `docker start <nombre>`; para n8n, `docker compose -f /opt/n8n/docker-compose.yml up -d`.
+
 ## Registro
 
-Al terminar, anota en `docs/INVENTARIO_ACTUAL.md` §0.1 (bitácora v1): fecha, "rotación de contraseña Postgres n8n", quién, y el resultado del paso 5. Esa anotación la puedo hacer yo si me pegas las líneas de salida del paso 5 (sin la contraseña).
+Al terminar, anota en `docs/INVENTARIO_ACTUAL.md` §0.1 (bitácora v1): fecha, "rotación de contraseña Postgres n8n" y "actualización de paquetes", quién, y el resultado del paso 5 y del `post-upgrade`. Esa anotación la puedo hacer yo si me pegas las líneas de salida (sin la contraseña).

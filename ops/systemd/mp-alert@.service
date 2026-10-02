@@ -1,0 +1,5 @@
+[Unit]
+Description=Alerta operativa mp (%i)
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mp-alert.sh %i

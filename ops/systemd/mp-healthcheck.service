@@ -1,0 +1,5 @@
+[Unit]
+Description=Sonda externa de /api/health (Brief 01)
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mp-healthcheck.sh
