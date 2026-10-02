@@ -3,6 +3,7 @@
 
 > Uso: pegar este documento como `docs/00_PROMPT_MAESTRO.md` en el repo y referenciarlo desde `CLAUDE.md`. Claude Code debe leerlo completo antes del Brief 01.
 > Idioma del producto: español (Panamá). Idioma del código/commits: inglés.
+> **Versión 5.2 — 2 oct 2026:** §19: la solicitud nace en `borrador` en el paso 1 del wizard y la sesión KYC se asocia a ella; wizard reanudable con OTP; IDAnalyzer redirige al formulario al aprobar (el WhatsApp con el enlace es respaldo); sesión de diseño con Gianclaudio (5 pantallas HTML con tokens FIC al cierre del Brief 01); reglas de calidad de UI; remoto GitHub privado con push tras cada commit.
 > **Versión 5.1 — 2 oct 2026:** §4.6-a: `total_pagar` = capital + interés flat; cuota redondeada a centavos con ajuste en la última cuota; alerta si LoanDisk difiere (decisión de Gianclaudio, Brief 00).
 > **Versión 5 — 1 oct 2026:** incorpora lo aprendido al poner en producción la v1 Zoho + N8N (§18): producto y ciclos de LoanDisk, sobre único de Sign, ambiente QA de BG, remitente de correos.
 > **Versión 4 — 29 sep 2026:** reglas financieras de la v1 formalizadas (§4.6): inicio de descuento por ciclo de planilla (afiliados con uno o dos ciclos), cuota quincenal para 3/6/9/12 meses, plantilla descargable de Base Diaria.
@@ -86,9 +87,9 @@ Credenciales N8N a respetar: Zoho `V8ToVmg60xSjZasl` para workflows sin WorkDriv
 
 Marca FIC (logo, paleta sobria, tipografía seria; sin gradientes llamativos). Manifest + service worker (`next-pwa`), "Agregar a pantalla de inicio" con instrucciones iOS/Android. Fase 2 opcional: Capacitor para tiendas.
 
-**Onboarding / Solicitud (wizard de 6 pasos, guardado automático, reanudable por link mágico)**
+**Onboarding / Solicitud (wizard de 6 pasos, guardado automático, reanudable con OTP — §19. La solicitud se crea en `borrador` en el paso 1 y todo lo demás, incluida la sesión KYC, cuelga de ella)**
 1. **Cédula** → lookup en Base Master → muestra empresa, fecha ingreso (enmascarado). Si no existe: mensaje "tu empresa aún no ha enviado tu registro" + botón "Avisar a mi RRHH" (envía correo al contacto del afiliado).
-2. **Verificación de identidad** → IDAnalyzer DocuPass embebido/redirect; callback guarda `session_id`, resultado, score y fotos en `01_KYC`. Selfie con instrucción visual (ya existe imagen en `isthmuscap.com/img/…`).
+2. **Verificación de identidad** → IDAnalyzer DocuPass por redirect, con la sesión KYC asociada a la solicitud en `borrador`; al aprobar, IDAnalyzer **redirige al wizard** (el WhatsApp con el enlace es solo respaldo, §19); callback guarda `session_id`, resultado, score y fotos en `01_KYC`. Selfie con instrucción visual (ya existe imagen en `isthmuscap.com/img/…`).
 3. **Datos de la solicitud** → monto y plazo (botones con los valores parametrizados del afiliado, §4.4), ciclo de planilla si su empresa tiene más de uno (o viene de la base), cuenta bancaria (validación por banco), servicios públicos, etc. Ve su fecha de primer descuento, la cuota quincenal y el total a pagar. Cálculo de letra en servidor (`/api/quote`) usando la tasa vigente del Afiliado. Pre-evaluación en vivo: antigüedad, 50 % descuentos, capacidad. Rechazo automático explicado con cortesía y opción de "solicitar revisión".
 4. **Términos y condiciones** dinámicos (HTML generado desde parámetros) + aceptación con timestamp, IP y user-agent (evidencia).
 5. **Resumen y envío** → crea/actualiza NUC, `Solicitudes_Microprestamo` en CRM (vía N8N), carpetas WorkDrive (`01_KYC … 06_Desembolso`), PDF del formulario a `02_Formulario`.
@@ -460,7 +461,7 @@ Tipografía: una sans geométrica sobria, sin fuentes decorativas. Sin gradiente
 **Estados del préstamo** (mismos colores que LoanDisk, para que FIC los reconozca): Current, Due Today, Missed Repayment, Arrears, Past Maturity.
 
 **Proceso:**
-1. **Antes del Brief 02** — sesión en Claude Design (1–2 h) sobre 5 pantallas clave: wizard del cliente (paso de monto), línea de tiempo de la solicitud, estado de cuenta, carga de Base Diaria con reporte de errores, bandeja de admin. Se itera con Diego en el canvas.
+1. **Antes del Brief 02** — sesión en Claude Design (1–2 h) sobre 5 pantallas clave: wizard del cliente (paso de monto), línea de tiempo de la solicitud, estado de cuenta, carga de Base Diaria con reporte de errores, bandeja de admin. Se itera con Diego en el canvas. **Decisión 02-oct-2026 (§19): la sesión se hace con Gianclaudio, no con Diego; las 5 pantallas se preparan en HTML con los tokens FIC al cierre del Brief 01 y se revisan en celular.**
 2. El resultado se congela como `docs/design/` + `styles/tokens.css` + configuración de Tailwind.
 3. Cada brief de UI referencia la pantalla aprobada y usa el skill `frontend-design`.
 4. Cada brief de UI cierra con capturas de Playwright (móvil 390 px y escritorio 1440 px) comparadas contra el diseño.
@@ -515,4 +516,16 @@ La v1 (Creator → CRM → Sign → N8N → LoanDisk → BG) quedó funcionando 
 - Todo correo del flujo MP sale de **gestionprestamos@isthmuscap.com** (N8N: credencial Gmail "Gmail account 2", `l3e9P4UxBqKXKir4`), nunca de facturasfic@.
 
 **KYC**
-- El callback de IDAnalyzer puede llegar **antes** que la solicitud: el proceso debe esperarla/asociarla después, no fallar. En la app esto se resuelve porque la solicitud existe desde el paso 1 del wizard, pero `mp_kyc_callback` debe tolerar el orden inverso igual.
+- El callback de IDAnalyzer puede llegar **antes** que la solicitud: el proceso debe esperarla/asociarla después, no fallar. En la app esto se resuelve porque la solicitud existe desde el paso 1 del wizard, pero `mp_kyc_callback` debe tolerar el orden inverso igual. **Precisión 02-oct-2026 (§19):** en la app nunca existe una sesión KYC sin solicitud; el callback trae el id de la solicitud y la tolerancia al orden inverso queda como defensa (cola de huérfanos + alerta).
+
+---
+
+## 19. Decisiones del 02-oct-2026 (vinculantes)
+
+1. **Solicitud desde el paso 1.** La solicitud se crea en estado `borrador` en el primer paso del wizard (cédula) y todo lo que sigue cuelga de ella: la sesión KYC se asocia a esa solicitud (**nunca existe una sesión KYC sin solicitud**), igual que los datos, la aceptación de T&C y el envío. `mp_kyc_callback` recibe el identificador de la solicitud en el callback; la tolerancia al orden inverso (§18) queda solo como defensa (cola de KYC huérfanos visible en `/admin` + alerta).
+2. **Wizard reanudable con OTP.** El guardado es automático por paso; el cliente retoma el wizard autenticándose con OTP (canal de §13.6) y la app lo lleva al último paso incompleto. Sustituye el "reanudable por link mágico" de §4.1.
+3. **IDAnalyzer redirige al formulario.** Al aprobar la verificación, IDAnalyzer DocuPass redirige al cliente de vuelta al wizard. El WhatsApp con el enlace al formulario es un **respaldo**, no el camino principal; por eso el residual del 03 KYC v1 (WhatsApp al final de la rama, hasta 30 min tarde) baja a prioridad **Baja** (`docs/RIESGOS.md` R34).
+4. **Sesión de diseño con Gianclaudio.** Cambia el interlocutor de §13.13 y §15.1: las 5 pantallas clave se preparan en **HTML con los tokens FIC** (`styles/tokens.css`) al cierre del Brief 01 y se revisan con Gianclaudio en celular; Diego no participa en esa sesión. Lo aprobado se congela en `docs/design/` antes del Brief 02.
+5. **Calidad de UI** (reglas en `CLAUDE.md`). Cada brief con pantallas cierra con: captura móvil 390 px y escritorio 1440 px por pantalla; `design:accessibility-review` antes de cerrar; textos revisados con `design:ux-copy` (ningún error técnico visible al usuario); flujo reanudable; prueba en celular real antes de aprobar el brief.
+6. **Remoto y ritmo de commits.** Repo privado `https://github.com/isthmus-capital/mp-app.git` (`origin`; `main` sincronizado el 02-oct-2026). Cada `git commit` va seguido de `git push` (R11 cerrado).
+7. **Calendario.** Supabase Pro se activa el 03-oct-2026. Si el Brief 01 necesita el proyecto `isthmus-mp` antes, ese paso queda pendiente y el brief sigue con el resto. Brief 01 aprobado para iniciar el 02-oct-2026.

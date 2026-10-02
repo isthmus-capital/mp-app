@@ -28,7 +28,7 @@
 | 2026-10-01 16:16 | 03 KYC `n4uerlMucRTnR8Bu` | `cb696e63-3091-4143-a034-388b718b9269` | Versión "corregida" (WhatsApp independiente de la solicitud, búsqueda con reintentos, correo a los 30 min, 3 reportes a KYC). La lectura por MCP del 02-oct detectó las salidas false de los dos IF sin conectar (1.2). | Gianclaudio, manual en N8N | Sin ejecuciones |
 | 2026-10-02 02:19 (21:19 Panamá) | 03 KYC `n4uerlMucRTnR8Bu` | **`37e44e08-3809-4a65-817d-a0c2fede1893`** | **Recableadas solo las salidas false** de "IF - Solicitud Encontrada" (→ "IF - Seguir Esperando") y de "IF - Seguir Esperando" (→ "Aviso - KYC sin Solicitud"). Verificado por MCP (`get_workflow_details`, solo lectura): ahora reintenta cada 2 min hasta 15 veces cuando no hay solicitud, avisa a los 30 min, y con solicitud procesa una sola vez. Sin otros cambios. | Gianclaudio, manual en N8N | **Pendiente validación en vivo** (próximo KYC real) |
 
-Residuales del 03 tras el recableado (ver 1.2): el WhatsApp sigue colgando de la misma salida que la búsqueda y, por `executionOrder v1` y su posición en el canvas, se ejecuta **después** de la rama de búsqueda; en el caso normal (KYC antes de la solicitud) saldría al terminar el bucle, hasta 30 min después. `transaction_id` sigue leyendo `body.id` (null). Token de Meta en el nodo. Rama de rechazo sin envío.
+Residuales del 03 tras el recableado (ver 1.2): el WhatsApp sigue colgando de la misma salida que la búsqueda y, por `executionOrder v1` y su posición en el canvas, se ejecuta **después** de la rama de búsqueda; en el caso normal (KYC antes de la solicitud) saldría al terminar el bucle, hasta 30 min después. `transaction_id` sigue leyendo `body.id` (null). Token de Meta en el nodo. Rama de rechazo sin envío. **Precisión 02-oct-2026 (Gianclaudio): IDAnalyzer redirige al formulario al aprobar; el WhatsApp con el enlace es un respaldo, no el camino principal. Este residual queda en prioridad Baja (R34).**
 
 ## 1. Workflows N8N — inventario de nodos (02-oct-2026, solo lectura por MCP)
 
@@ -65,7 +65,7 @@ Todos los workflows MP están en la carpeta `FbzPrZ0TGC7IFJxr`, sin tags. El 05 
 | A los 30 min sin solicitud, correo desde gestionprestamos@ a Gisela y Gianclaudio | En `cb696e63…` el aviso colgaba de la salida true (correos falsos). **Corregido en `37e44e08…`**: false de "IF - Seguir Esperando" → "Aviso - KYC sin Solicitud" (credencial `l3e9P4UxBqKXKir4`, a ggonzalez@ y glopolito@) | **Corregido, pendiente validación en vivo** |
 | Si la encuentra: `IDAnalyzer_Session_ID` en CRM y 3 reportes al folder KYC | Confirmado ✅; con `37e44e08…` se procesa **una sola vez** (true → Actualizar Session ID → Split → Descargar → Subir → Aggregate, sin volver al bucle). Residual: `IDAnalyzer_Transaction_ID` queda `null` (`body.id` vs `transactionId`, asignación duplicada) | **Corregido el bucle; `transaction_id` sigue null** |
 
-Conexiones verificadas en `37e44e08…`: `IF - Solicitud Encontrada.main[0]` → Actualizar Session ID; `main[1]` → IF - Seguir Esperando; `IF - Seguir Esperando.main[0]` → Wait 2 min; `main[1]` → Aviso. **Residual que conviene corregir antes del próximo KYC real:** mover el WhatsApp antes de la búsqueda (p. ej. Preparar Mensaje Aprobado → WhatsApp → Buscar Solicitud CRM) para que salga de inmediato; corregir `transaction_id` a `body.transactionId`; mover el token de Meta a una credencial. Lección confirmada: el Retry de N8N (29583/29584) reutilizó la salida guardada y volvió a fallar; para reprocesar hay que re-ejecutar con el payload original.
+Conexiones verificadas en `37e44e08…`: `IF - Solicitud Encontrada.main[0]` → Actualizar Session ID; `main[1]` → IF - Seguir Esperando; `IF - Seguir Esperando.main[0]` → Wait 2 min; `main[1]` → Aviso. **Residual (prioridad Baja desde el 02-oct-2026: IDAnalyzer redirige al formulario al aprobar; el WhatsApp es respaldo):** mover el WhatsApp antes de la búsqueda (p. ej. Preparar Mensaje Aprobado → WhatsApp → Buscar Solicitud CRM) para que salga de inmediato; corregir `transaction_id` a `body.transactionId`; mover el token de Meta a una credencial. Lección confirmada: el Retry de N8N (29583/29584) reutilizó la salida guardada y volvió a fallar; para reprocesar hay que re-ejecutar con el payload original.
 
 **Otros puntos.** Las ejecuciones con error del 01-oct (29562, 29584) fallaron en la subida a WorkDrive (400 F6003 "Invalid Param": `parent_id` con `.item`; la versión actual usa `.last()`). `redaction.production = false`: las ejecuciones guardan cédula, teléfono, email y los tokens de filevault de IDAnalyzer. El `profileId` llega en el payload y no está escrito en el 03 (vive en el 02, no revisado).
 
@@ -202,7 +202,7 @@ Leyenda: ✅ confirmado en CRM/Sign/registros · 📄 según Prompt Maestro §18
 | Entradas | Formulario web de Zoho Creator (`Canal_de_Entrada = Formulario Web (Creator)` ✅). Datos personales, laborales, cuenta bancaria, monto (`100/150/200/300`), cuotas (`6`), aceptación de T&C con fecha/hora e IP (`Acepta_Terminos`, `Single_Line_24`, `Single_Line_25`), firma manuscrita (`Firma`, `Firma_Img`). |
 | Validaciones | En Creator contra `Empleados_Report` (cédula existe en la base del afiliado, antigüedad ≥ 3 meses, descuentos actuales, capacidad) 📄 §1. **Se retiran con Creator**: la app las reimplementa en el motor de reglas (Brief 06) sobre `empleados_master`. |
 | Salidas | Registro en `Solicitudes_Microprestamo` ✅ con: `ID_Solicitante` (`SO -000NN`), `ID_Afiliado`, tasa copiada del afiliado (`Tasa_Nominal = Tasa_Efectiva = Afiliados.Taza_de_Interes` ✅; quién la copia ⏳), `Letra_Mensual` (cuota quincenal ✅), `Fecha_Inicio_Descuento` (Deluge, regla de la quincena ✅), `LoanDisk_Branch_ID` heredado (regla CRM ✅), estado `Nueva → En Revision` (regla CRM ✅), 7 carpetas WorkDrive y sus URLs (Zoho Flow ✅). |
-| Orden real | En el flujo del cliente el formulario llega **después** del KYC: el 03 envía por WhatsApp el enlace del formulario al aprobarse IDAnalyzer (Paso 1). |
+| Orden real | En el flujo del cliente el formulario llega **después** del KYC: al aprobar, **IDAnalyzer redirige al formulario**; el 03 envía además el enlace por WhatsApp como respaldo (Paso 1; precisión 02-oct-2026). |
 | Observación | **No existe un campo NUC** en `Solicitudes_Microprestamo` ni en `Afiliados`; el NUC debe vivir en `Contacts` u otro módulo. Confirmar en el Brief 03/05 antes de `ensure_cliente`. |
 
 ### Paso 1 — 03 KYC (IDAnalyzer DocuPass) — corregido y publicado por Gianclaudio el 02-oct-2026 (manualmente en N8N, fuera de esta sesión)
@@ -211,12 +211,12 @@ Leyenda: ✅ confirmado en CRM/Sign/registros · 📄 según Prompt Maestro §18
 |---|---|
 | Workflow | "03 - MP KYC - Callback IDAnalyzer" `n4uerlMucRTnR8Bu` ✅ (1.2). Profile IDAnalyzer `53067a87b10a41bd8771c34e9b7c53c4` 📄 §2 (llega en el payload; se configura en el 02). Versión corregida publicada por Gianclaudio manualmente en N8N y fuera de esta sesión (`37e44e08…`, 02-oct-2026 02:19 UTC; desde esta sesión no se publicó ni modificó ningún workflow); **sin ejecuciones aún**: la valida el próximo KYC real. |
 | Entradas | Callback de IDAnalyzer con el resultado de la verificación (cédula, sesión, estado aprobado/rechazado). Llega normalmente **antes** de que exista la solicitud. |
-| Comportamiento (v1 corregida) | 1. Al **aprobar** IDAnalyzer, el **WhatsApp con el enlace del formulario sale de inmediato**, sin depender de encontrar la solicitud (antes dependía de ella y casi nunca salía). Si el WhatsApp falla, **no frena** lo demás. 2. En paralelo busca la solicitud por cédula; si no existe, **reintenta cada 2 min hasta 15 veces (30 min)**. 3. Sin solicitud a los 30 min → correo desde **gestionprestamos@** a Gisela y a Gianclaudio con la cédula y el enlace de la ejecución, para reprocesarla. 4. Si la encuentra: guarda `IDAnalyzer_Session_ID` en CRM ✅ (presente en SO-00078/79) y sube **3 reportes** (Transaction, Face, Docupass Audit) al folder KYC (`Folder_ID_KYC`). |
+| Comportamiento (v1 corregida) | 1. Al **aprobar** IDAnalyzer, el **WhatsApp con el enlace del formulario sale de inmediato** (respaldo: el camino principal es la redirección de IDAnalyzer al formulario), sin depender de encontrar la solicitud (antes dependía de ella y casi nunca salía). Si el WhatsApp falla, **no frena** lo demás. 2. En paralelo busca la solicitud por cédula; si no existe, **reintenta cada 2 min hasta 15 veces (30 min)**. 3. Sin solicitud a los 30 min → correo desde **gestionprestamos@** a Gisela y a Gianclaudio con la cédula y el enlace de la ejecución, para reprocesarla. 4. Si la encuentra: guarda `IDAnalyzer_Session_ID` en CRM ✅ (presente en SO-00078/79) y sube **3 reportes** (Transaction, Face, Docupass Audit) al folder KYC (`Folder_ID_KYC`). |
 | Validaciones | Resultado/score de DocuPass; selfie con instrucción visual 📄 §4.1. |
 | Salidas | WhatsApp al solicitante; `IDAnalyzer_Session_ID` (+ `IDAnalyzer_Transaction_ID`) en CRM; 3 PDF en `Folder_ID_KYC`; correo de excepción a operaciones si no hay solicitud. |
 | Lección N8N | El **Retry** de N8N reutiliza la salida guardada del nodo anterior; para reprocesar hay que **re-ejecutar el workflow completo con el payload original** (confirmado en 29583/29584). Para la app: `webhook_inbox` conserva el payload original de cada callback y el reproceso siempre parte de él. |
-| **Contraste con los nodos (02-oct-2026)** | La lectura de `cb696e63…` detectó las salidas false de los dos IF sin conectar; **recableado en `37e44e08…` (02:19 UTC) y verificado por MCP**: reintentos y aviso cuando no hay solicitud, proceso único cuando sí la hay. Residuales: WhatsApp al final de la rama (hasta 30 min en el caso normal) y como texto libre, `IDAnalyzer_Transaction_ID` null, token de Meta en el nodo. Pendiente validación en vivo. |
-| Regla para la app | El **OTP/enlace por WhatsApp no puede depender de que exista la solicitud**, y `mp_kyc_callback` debe tolerar el orden KYC → solicitud (asociación posterior por cédula/sesión con reintentos y alerta a operaciones), igual que la v1 corregida. |
+| **Contraste con los nodos (02-oct-2026)** | La lectura de `cb696e63…` detectó las salidas false de los dos IF sin conectar; **recableado en `37e44e08…` (02:19 UTC) y verificado por MCP**: reintentos y aviso cuando no hay solicitud, proceso único cuando sí la hay. Residuales (prioridad Baja, precisión 02-oct: IDAnalyzer redirige al formulario; el WhatsApp es respaldo): WhatsApp al final de la rama (hasta 30 min en el caso normal) y como texto libre, `IDAnalyzer_Transaction_ID` null, token de Meta en el nodo. Pendiente validación en vivo. |
+| Regla para la app | **Decisión 02-oct-2026 (Prompt Maestro §19):** la solicitud se crea en `borrador` en el paso 1 del wizard y la sesión KYC nace asociada a ella (nunca una sesión KYC sin solicitud); el callback trae el id de la solicitud. `mp_kyc_callback` conserva como defensa la tolerancia al orden KYC → solicitud (payload original en `webhook_inbox`, cola de huérfanos en `/admin` y alerta a operaciones). El wizard es reanudable con OTP. El WhatsApp con el enlace es respaldo porque IDAnalyzer redirige al formulario al aprobar. |
 
 ### Paso 2 — Revisión y envío a firma (CRM + Deluge)
 
@@ -265,8 +265,8 @@ Leyenda: ✅ confirmado en CRM/Sign/registros · 📄 según Prompt Maestro §18
 | 06 BG tal cual, con `bg_ambiente` | `dry_run` por defecto en staging; cola de desembolso con OTP para Diego; conciliación `bg_transacciones` |
 | Correos desde gestionprestamos@ | WhatsApp como canal principal (plantillas UTILITY), email de respaldo, push PWA |
 | Expediente en CRM (write-back de cada transición) | Estado operativo en Supabase; `webhook_inbox`/`outbox` idempotentes; `mp_reconcile_crm` nocturno |
-| KYC IDAnalyzer con callback tolerante al orden (WhatsApp inmediato, búsqueda por cédula con reintentos 2 min × 15, correo de excepción a operaciones) | Adaptador `kyc_provider`; `webhook_inbox` con payload original para reproceso; reutilización de KYC vigente < 12 meses |
-| OTP/enlace por WhatsApp independiente de la solicitud | Plantilla `fic_mp_codigo_acceso` + magic link de respaldo; la solicitud existe desde el paso 1 del wizard pero el canal nunca depende de ella |
+| KYC IDAnalyzer con redirección al formulario al aprobar y callback tolerante al orden (WhatsApp de respaldo, búsqueda por cédula con reintentos 2 min × 15, correo de excepción a operaciones) | Sesión KYC siempre asociada a la solicitud en `borrador` del paso 1 (§19); adaptador `kyc_provider`; `webhook_inbox` con payload original para reproceso; reutilización de KYC vigente < 12 meses |
+| OTP/enlace por WhatsApp independiente de la solicitud | Plantilla `fic_mp_codigo_acceso` + magic link de respaldo; la solicitud existe en `borrador` desde el paso 1 del wizard (§19), el wizard se reanuda con OTP y el canal nunca depende de ella |
 | 7 carpetas WorkDrive por solicitud | 6 carpetas `01_KYC … 06_Desembolso` creadas por N8N (sin Zoho Flow); mapeo en Brief 08 |
 
 ## 2. Banco General H2H
@@ -482,7 +482,7 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 
 - Organización: `Isthmus Capital` (`dsokfwbgooixlpjflflv`).
 - Proyectos existentes: `isthmus-cotizador` (`aezbofbjcuwjwoanmscx`, us-east-1, PG 17) y `maxmotors-precios` (`ktdycqrkhccpycrsoszb`, us-east-1, PG 17).
-- Plan de la organización: **Free** (Gianclaudio, 02-oct-2026); el MCP no expone el plan.
+- Plan de la organización: **Free** (Gianclaudio, 02-oct-2026); el MCP no expone el plan. **Upgrade a Pro previsto para el 03-oct-2026.**
 - **`isthmus-mp` no existe.** Pendiente upgrade a Pro antes de crearlo (Brief 03). Ver `docs/RIESGOS.md` R10.
 
 ## 11. Accesos
@@ -495,15 +495,15 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 | Token WhatsApp en `.env` | OK | `.env` con permisos 600 (root); 5 claves `WHATSAPP_*`; `WHATSAPP_PHONE_NUMBER_ID = 1184886231372996`, `WHATSAPP_BUSINESS_ACCOUNT_ID = 4466216373701343`, `WHATSAPP_APP_ID = 1360854289567229`, `WHATSAPP_TEMPLATE_OTP = fic_mp_codigo_acceso` (coinciden con §14); `WHATSAPP_TOKEN` presente (no se imprime). Pendiente Brief 04: validar con el Access Token Debugger y planificar rotación. |
 | Credencial N8N `Meta WhatsApp MP` | **Sin confirmar** | Bloqueo del MCP n8n (sección 0). Gianclaudio la crea o confirma. |
 | Playwright en el VPS | **No soportado nativo** | Playwright 1.56 no soporta Ubuntu 26.04 (`npx playwright install chromium` falla) y el MCP de Playwright no encuentra Chrome. Brief 02: correr Playwright en Docker (`mcr.microsoft.com/playwright`). Las capturas del Brief 00 se hicieron con Gotenberg (`gotenberg/gotenberg:8`, v8.34.0, contenedor existente). |
-| Remoto git | **No hay** | `git remote -v` vacío; MCP GitHub falló al conectar. Ver R11. |
-| Diseño: 5 pantallas en Claude Design | **No existen** | `Artifact list` sin artefactos de tipo Design; ver `docs/design/README.md`. |
+| Remoto git | **OK** (02-oct-2026) | `origin` = `https://github.com/isthmus-capital/mp-app.git` (privado), `main` sincronizado; regla en `CLAUDE.md`: cada commit va seguido de `git push`. R11 cerrado. |
+| Diseño: 5 pantallas | **Pendiente** (cierre del Brief 01) | Decisión 02-oct-2026 (§19): se preparan en HTML con los tokens FIC y se revisan con Gianclaudio en celular (no con Diego); ver `docs/design/README.md`. |
 
 ## 12. Pendientes y bloqueantes
 
 **Bloqueantes**
 1. ~~MCP n8n re-autenticado~~ **Resuelto el 02-oct-2026**: sección 1 completada por MCP (05 v2, 06 QA/prod, credenciales; 03/04 en 1.2–1.3). **Criterio de aceptación 1 del Brief 00: cumplido** en IDs LoanDisk y payload BG; queda abierto solo el cronograma real de LoanDisk (no visible en N8N; se lee por API en el Brief 06).
-2. **Supabase Pro** antes del Brief 03.
-3. **Remoto git** o backup off-site antes del Brief 01.
+2. **Supabase Pro** antes del Brief 03 (previsto 03-oct-2026).
+3. ~~Remoto git o backup off-site antes del Brief 01~~ **Resuelto el 02-oct-2026**: `origin` privado en GitHub (`isthmus-capital/mp-app`), `main` sincronizado, push tras cada commit.
 
 **Pendientes (no bloquean el Brief 01/02)**
 4. Código Deluge de `mp_enviar_a_zoho_sign1` (Gianclaudio lo pega).
@@ -513,14 +513,14 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 8. Crear `Modo_Validacion` en CRM `Afiliados` y ampliar picklists `Cuotas`/`Monto_Solicitado` (Brief 05, cambios en CRM con aprobación).
 9. Crear DNS `mp.` y `staging-mp.` (Brief 01).
 10. Credencial N8N `Meta WhatsApp MP`: **no existe** (`list_credentials`); crearla con el token del `.env` (Gianclaudio) antes del Brief 04.
-11. Diseñar y aprobar las 5 pantallas con Diego antes del Brief 02.
+11. Preparar las 5 pantallas en HTML con los tokens FIC al cierre del Brief 01 y revisarlas con Gianclaudio en celular (decisión 02-oct-2026, §19; no con Diego); congelar lo aprobado en `docs/design/` antes del Brief 02.
 12. Brief 02: Playwright en Docker (no hay soporte nativo de Chromium en Ubuntu 26.04).
 13. Validar en vivo el 03 KYC corregido (publicado el 02-oct-2026) con el próximo KYC real; anotar el resultado aquí.
 14. Diego: aprobar en Banca en Línea la transferencia BG código 18524 de SO-00079. **No existe 07 ni polling**: el estado final no llega a CRM; `Aprobaciones_BG` nunca se escribe. La app implementa `mp_bg_polling` (Brief 12).
 16. **Seguridad (urgente, fuera del alcance de la app):** mover a credenciales de N8N y rotar las claves de BG (prod y QA) y la Basic de LoanDisk que están en texto plano en los nodos del 05 v2, 06 y 5wHL8; poner autenticación a los webhooks `bg-crear-transferencia` y `mp-carta-firmada-v2`. Cambios en N8N: se muestran y se aprueban antes (CLAUDE.md).
 17. LoanDisk (Gisela): revisar los préstamos huérfanos de prueba 11909205 (SO-00078) y 11909301 (SO-00079, con número SO) y el borrower duplicado de la cédula de SO-00078.
 18. Confirmar con Gianclaudio que `Contacts.C_digo_nico` (`IS-00NNNN`) es el NUC oficial y quién asigna la secuencia (6.4).
-19. ~~Verificar y corregir el cableado de los IF del 03~~ **Hecho por Gianclaudio (`37e44e08…`, 02-oct 02:19 UTC), verificado por MCP.** Quedan: mover el WhatsApp antes de la búsqueda (hoy saldría hasta 30 min después en el caso normal) y corregir `transaction_id` a `body.transactionId`; **validar en vivo con el próximo KYC real** y anotar el resultado en 0.1.
+19. ~~Verificar y corregir el cableado de los IF del 03~~ **Hecho por Gianclaudio (`37e44e08…`, 02-oct 02:19 UTC), verificado por MCP.** Quedan, en **prioridad Baja** (02-oct: IDAnalyzer redirige al formulario al aprobar; el WhatsApp es respaldo): mover el WhatsApp antes de la búsqueda (hoy saldría hasta 30 min después en el caso normal) y corregir `transaction_id` a `body.transactionId`; **validar en vivo con el próximo KYC real** y anotar el resultado en 0.1.
 20. WhatsApp del 03: pasar a plantilla aprobada (`fic_mp_codigo_acceso` o una UTILITY nueva) con enlace https; mover el token de Meta a la credencial `Meta WhatsApp MP`; implementar la rama de rechazo.
 21. N8N: activar la redacción de datos en ejecuciones (`redaction.production`) y revisar la retención; los tokens de filevault de IDAnalyzer permiten descargar los reportes KYC sin autenticación.
 15. Brief 06/10: abrir el Contrato firmado de SO-00078 y anotar el `monto_total` real (172.00 o 172.02). La redefinición de `total_pagar` en §4.6-a ya está aprobada y escrita (v5.1, 02-oct-2026).

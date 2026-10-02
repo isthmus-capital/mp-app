@@ -9,12 +9,13 @@ Reemplaza el proceso actual de Zoho Creator + Zoho Flow + Monday, que corre en p
 **Lee `docs/00_PROMPT_MAESTRO.md` completo antes de cualquier brief.** Las decisiones de su §13 son vinculantes.
 
 ## Reglas de trabajo
-- Un brief a la vez, desde `docs/briefs/NN_*.md`. No empieces el siguiente sin `git commit` y pruebas ejecutadas del anterior.
+- Un brief a la vez, desde `docs/briefs/NN_*.md`. No empieces el siguiente sin `git commit` + `git push` y pruebas ejecutadas del anterior.
 - **Modo aprobación manual** obligatorio en: fórmulas financieras, transiciones de estado, firmas, desembolsos BG, migraciones de Supabase, cualquier llamada a producción.
 - Nunca asumas nombres de campos: verifica con los MCP (Zoho CRM, Supabase, n8n) antes de escribir código. El nombre visible en la UI de Zoho **no** es el API name.
 - Si un dato de negocio no está en el Prompt Maestro, pregunta. No inventes tasas, plazos ni IDs.
 - Tests antes que implementación en el motor de reglas, cálculo de letra y transiciones de estado.
 - Verifica antes de decir "listo": corre el comando, lee la salida, muestra la evidencia.
+- **Cada `git commit` va seguido de `git push`** a `origin` (repo privado `https://github.com/isthmus-capital/mp-app.git`). Nunca dejes commits sin empujar al cerrar una sesión.
 
 ## Arquitectura (resumen)
 - **Supabase** (`isthmus-mp`): estado operativo, auth, auditoría. La app nunca llama a Zoho en el request path del cliente.
@@ -51,7 +52,7 @@ supabase gen types typescript --project-id <id> > lib/db/types.ts
 
 ## MCPs y skills
 - **MCPs:** Supabase, n8n, Zoho CRM (data / data-operations / insights), Zoho WorkDrive, Zoho Sign, Gmail. Monday solo lectura durante la migración del flujo BG.
-- **Skills:** `supabase:supabase`, `supabase:supabase-postgres-best-practices`, `superpowers:brainstorming` (antes de cada brief nuevo), `superpowers:writing-plans`, `superpowers:test-driven-development`, `superpowers:systematic-debugging`, `superpowers:verification-before-completion`, `frontend-design`, `operations:runbook`.
+- **Skills:** `supabase:supabase`, `supabase:supabase-postgres-best-practices`, `superpowers:brainstorming` (antes de cada brief nuevo), `superpowers:writing-plans`, `superpowers:test-driven-development`, `superpowers:systematic-debugging`, `superpowers:verification-before-completion`, `frontend-design`, `design:accessibility-review`, `design:ux-copy`, `operations:runbook`.
 
 ## Prohibido (sin excepción)
 - **Banco General**: `lib/banking` usa `bg_ambiente`. Staging y toda prueba = `qa` (06 QA `EQOqUBQp1N60zFlG`, cuenta de certificación). `prod` (06 `GTFFlEfXa0LOTtnF`) solo con aprobación explícita de Gianclaudio y Diego. Nunca modificar el 06 prod.
@@ -71,5 +72,13 @@ supabase gen types typescript --project-id <id> > lib/db/types.ts
 - Supabase: GRANTs explícitos por tabla, RLS activa en todo, service role solo en servidor.
 - Todo webhook entrante se registra en `webhook_inbox` con `idempotency_key` antes de procesar.
 
+## Calidad de UI (obligatorio en cada brief con pantallas)
+- **Capturas por pantalla**: móvil 390 px y escritorio 1440 px (Playwright), guardadas en `docs/design/capturas/` y comparadas contra la pantalla aprobada.
+- **`design:accessibility-review`** antes de cerrar el brief (WCAG 2.1 AA: contraste, toque ≥ 44 px, teclado, lector de pantalla).
+- **Textos con `design:ux-copy`**: español de Panamá, formal y breve. Ningún error técnico visible al usuario (nada de stack traces, códigos HTTP, nombres de campos ni mensajes crudos de proveedor); siempre un mensaje claro con qué hacer a continuación.
+- **Flujo reanudable**: todo flujo de varios pasos guarda el avance por paso y se retoma con OTP desde el último paso incompleto (Prompt Maestro §19).
+- **Prueba en celular real** por Gianclaudio antes de aprobar cada brief de UI; no se cierra solo con capturas.
+- **Sesión de diseño**: con Gianclaudio, no con Diego. Las 5 pantallas clave se preparan en HTML con los tokens FIC (`styles/tokens.css`) al cierre del Brief 01 para revisarlas en celular; lo aprobado se congela en `docs/design/` antes del Brief 02.
+
 ## Marca
-`--fic-azul #193A76` · `--fic-azul-claro #66A5E6`. Sobrio, sin gradientes. Detalle en §15 del Prompt Maestro.
+`--fic-azul #193A76` · `--fic-azul-claro #66A5E6`. Sobrio, sin gradientes. Detalle en §15 y §19 del Prompt Maestro.
