@@ -1,0 +1,7 @@
+# BEGIN mp-app DOCKER-USER (Brief 01): los puertos que Docker publica no son alcanzables desde Internet; Caddy entra por loopback.
+*filter
+:DOCKER-USER - [0:0]
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctstate NEW -m multiport --dports 3000,3001,3002,5678 -j DROP
+-A DOCKER-USER -j RETURN
+COMMIT
+# END mp-app DOCKER-USER
