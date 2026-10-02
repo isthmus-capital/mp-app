@@ -1,0 +1,47 @@
+/* FIC — tokens de marca. Fuente: docs/00_PROMPT_MAESTRO.md §15.
+   Tipografía propuesta (Manrope) sujeta a la sesión de diseño con Diego antes del Brief 02.
+   Estados del préstamo: nombres de LoanDisk, colores de la paleta FIC (mapeo estado → token). */
+:root {
+  /* Marca (§15, literal) */
+  --fic-azul:        #193A76;  /* primario: encabezados, botones, texto de marca */
+  --fic-azul-claro:  #66A5E6;  /* secundario: acentos, estados activos, gráficos */
+  --fic-azul-900:    #0F2650;  /* hover/pressed */
+  --fic-gris-100:    #F4F6FA;  /* fondos de tarjeta */
+  --fic-gris-600:    #5B6472;  /* texto secundario */
+  --fic-exito:       #1F7A4D;
+  --fic-alerta:      #B45309;
+  --fic-error:       #B42318;
+
+  /* Neutros derivados (propuesta Brief 00; no están en §15) */
+  --fic-blanco:      #FFFFFF;
+  --fic-gris-200:    #E3E8F0;  /* bordes, divisores */
+  --fic-gris-300:    #C9D2DF;  /* bordes de inputs */
+  --fic-texto:       #16213A;  /* texto principal */
+
+  /* Tipografía */
+  --fic-font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fic-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fic-text-xs:   0.75rem;
+  --fic-text-sm:   0.875rem;
+  --fic-text-base: 1rem;
+  --fic-text-lg:   1.125rem;
+  --fic-text-xl:   1.375rem;
+  --fic-text-2xl:  1.75rem;
+  --fic-text-3xl:  2.25rem;
+  --fic-leading-tight:  1.2;
+  --fic-leading-normal: 1.5;
+
+  /* Forma */
+  --fic-radius-sm: 6px;
+  --fic-radius-md: 10px;
+  --fic-radius-lg: 16px;
+  --fic-shadow-sm: 0 1px 2px rgba(15, 38, 80, 0.06);  /* única sombra permitida (§15: sin sombras marcadas) */
+  --fic-touch-min: 44px;                               /* §9: tamaño de toque mínimo */
+
+  /* Estados del préstamo (LoanDisk) → tokens FIC */
+  --estado-current:       var(--fic-exito);
+  --estado-due-today:     var(--fic-azul-claro);
+  --estado-missed:        var(--fic-alerta);
+  --estado-arrears:       var(--fic-error);
+  --estado-past-maturity: var(--fic-azul-900);
+}

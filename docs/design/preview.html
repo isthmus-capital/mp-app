@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIC · tokens de marca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../styles/tokens.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fic-blanco);color:var(--fic-texto);font-family:var(--fic-font-sans);font-size:var(--fic-text-base);line-height:var(--fic-leading-normal);font-feature-settings:"tnum" 1}
+  header{background:var(--fic-azul);color:#fff;padding:14px 0}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+  header .wrap{display:flex;align-items:center;gap:12px}
+  header img{height:40px;width:auto;background:#fff;border-radius:var(--fic-radius-sm);padding:4px 8px}
+  h1{font-size:var(--fic-text-lg);margin:0;font-weight:600}
+  h2{font-size:var(--fic-text-lg);color:var(--fic-azul);margin:32px 0 12px;font-weight:600}
+  .muted{color:var(--fic-gris-600);font-size:var(--fic-text-sm)}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr)}}
+  .swatch{border:1px solid var(--fic-gris-200);border-radius:var(--fic-radius-md);overflow:hidden;background:#fff}
+  .swatch .c{height:56px}
+  .swatch .l{padding:8px 10px;font-size:var(--fic-text-xs);line-height:1.4}
+  .swatch code{font-family:var(--fic-font-mono);color:var(--fic-gris-600)}
+  .type p{margin:6px 0}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:var(--fic-touch-min);min-width:var(--fic-touch-min);padding:0 20px;border-radius:var(--fic-radius-md);font-weight:600;font-size:var(--fic-text-base);border:1px solid transparent;cursor:pointer;margin:4px 8px 4px 0;font-family:inherit}
+  .btn-primary{background:var(--fic-azul);color:#fff}
+  .btn-primary:hover{background:var(--fic-azul-900)}
+  .btn-secondary{background:#fff;color:var(--fic-azul);border-color:var(--fic-azul)}
+  .btn-ghost{background:var(--fic-gris-100);color:var(--fic-texto)}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:var(--fic-text-sm);font-weight:600;background:var(--fic-gris-100);margin:4px 8px 4px 0}
+  .badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--b)}
+  .card{background:var(--fic-gris-100);border-radius:var(--fic-radius-lg);padding:16px;max-width:420px;box-shadow:var(--fic-shadow-sm)}
+  .card .amt{font-size:var(--fic-text-3xl);font-weight:700;color:var(--fic-azul);line-height:var(--fic-leading-tight)}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--fic-gris-200)}
+  .row:first-of-type{border-top:0}
+  .input{display:block;width:100%;max-width:420px;min-height:var(--fic-touch-min);border:1px solid var(--fic-gris-300);border-radius:var(--fic-radius-md);padding:0 12px;font:inherit;color:inherit;background:#fff}
+  footer{margin:40px 0 24px}
+</style>
+</head>
+<body>
+<header><div class="wrap"><img src="../../public/brand/logo.png" alt="Isthmus Capital"><h1>Micropréstamos · tokens de marca</h1></div></header>
+<main class="wrap">
+  <p class="muted">Página de prueba del Brief 00. Todos los datos son ficticios (Ejemplo). Tipografía propuesta: Manrope, sujeta a la sesión de diseño con Diego antes del Brief 02.</p>
+
+  <h2>Paleta de marca (§15)</h2>
+  <div class="grid">
+    <div class="swatch"><div class="c" style="background:var(--fic-azul)"></div><div class="l">--fic-azul<br><code>#193A76</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-azul-claro)"></div><div class="l">--fic-azul-claro<br><code>#66A5E6</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-azul-900)"></div><div class="l">--fic-azul-900<br><code>#0F2650</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-gris-100)"></div><div class="l">--fic-gris-100<br><code>#F4F6FA</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-gris-600)"></div><div class="l">--fic-gris-600<br><code>#5B6472</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-exito)"></div><div class="l">--fic-exito<br><code>#1F7A4D</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-alerta)"></div><div class="l">--fic-alerta<br><code>#B45309</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-error)"></div><div class="l">--fic-error<br><code>#B42318</code></div></div>
+  </div>
+
+  <h2>Neutros derivados (propuesta)</h2>
+  <div class="grid">
+    <div class="swatch"><div class="c" style="background:var(--fic-blanco);border-bottom:1px solid var(--fic-gris-200)"></div><div class="l">--fic-blanco<br><code>#FFFFFF</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-gris-200)"></div><div class="l">--fic-gris-200 · bordes<br><code>#E3E8F0</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-gris-300)"></div><div class="l">--fic-gris-300 · inputs<br><code>#C9D2DF</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--fic-texto)"></div><div class="l">--fic-texto · texto principal<br><code>#16213A</code></div></div>
+  </div>
+
+  <h2>Tipografía · Manrope</h2>
+  <div class="type">
+    <p style="font-size:var(--fic-text-3xl);font-weight:700;line-height:var(--fic-leading-tight)">B/. 300.00 · 3xl 700</p>
+    <p style="font-size:var(--fic-text-2xl);font-weight:600;line-height:var(--fic-leading-tight)">Tu solicitud fue aprobada · 2xl 600</p>
+    <p style="font-size:var(--fic-text-xl);font-weight:600">Resumen de la solicitud · xl 600</p>
+    <p style="font-size:var(--fic-text-lg);font-weight:600">Cuota quincenal · lg 600</p>
+    <p>Texto base 400. Cifras tabulares: 1,234.56 y 9,876.54 alinean en columnas.</p>
+    <p class="muted">Texto secundario sm · --fic-gris-600</p>
+    <p style="font-size:var(--fic-text-xs)" class="muted">Pie legal xs · Financiera Isthmus Capital, Panamá.</p>
+  </div>
+
+  <h2>Botones e inputs</h2>
+  <button class="btn btn-primary">Continuar</button>
+  <button class="btn btn-secondary">Volver</button>
+  <button class="btn btn-ghost">Descargar plantilla</button>
+  <p><input class="input" placeholder="Cédula (Ejemplo: 8-000-0000)" aria-label="Cédula de ejemplo"></p>
+
+  <h2>Estados del préstamo · mapeo estado → token</h2>
+  <span class="badge" style="--b:var(--estado-current)">Current · --estado-current</span>
+  <span class="badge" style="--b:var(--estado-due-today)">Due Today · --estado-due-today</span>
+  <span class="badge" style="--b:var(--estado-missed)">Missed Repayment · --estado-missed</span>
+  <span class="badge" style="--b:var(--estado-arrears)">Arrears · --estado-arrears</span>
+  <span class="badge" style="--b:var(--estado-past-maturity)">Past Maturity · --estado-past-maturity</span>
+
+  <h2>Tarjeta de ejemplo</h2>
+  <div class="card">
+    <div class="muted">Préstamo MP · Ejemplo · NUC 000000</div>
+    <div class="amt">B/. 172.00</div>
+    <div class="muted" style="margin-bottom:8px">Total a pagar · 6 cuotas quincenales</div>
+    <div class="row"><span>Monto</span><strong>B/. 100.00</strong></div>
+    <div class="row"><span>Cuota quincenal</span><strong>B/. 28.67</strong></div>
+    <div class="row"><span>Primer descuento</span><strong>10-oct-2026</strong></div>
+    <div class="row"><span>Estado</span><span class="badge" style="--b:var(--estado-current);margin:0">Current</span></div>
+  </div>
+
+  <footer class="muted">Financiera Isthmus Capital · Brief 00 · 02-oct-2026 · Ejemplo</footer>
+</main>
+</body>
+</html>
