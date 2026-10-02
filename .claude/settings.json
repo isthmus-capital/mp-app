@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push origin main)"
+    ],
+    "deny": [
+      "Read(/opt/n8n/**)",
+      "Bash(*/opt/n8n*)",
+      "Bash(docker exec*n8n*)",
+      "Bash(docker inspect*n8n*)",
+      "Bash(docker compose*-f /opt/n8n*)"
+    ]
+  }
+}
