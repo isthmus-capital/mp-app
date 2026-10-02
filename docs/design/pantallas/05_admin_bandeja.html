@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bandeja de solicitudes - Administración</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../styles/tokens.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <img class="logo" src="../../../public/brand/logo.png" alt="Isthmus Capital">
+  <nav aria-label="Secciones de administración">
+    <a href="#" aria-current="page">Bandeja</a><a href="#">Afiliados</a><a href="#">Parámetros</a><a href="#">Desembolsos</a><a href="#">Cartera</a><a href="#">Auditoría</a><a href="#">Salud</a>
+  </nav>
+  <span class="ejemplo">Datos de ejemplo</span>
+</div></header>
+<main><div class="wrap">
+  <h1>Bandeja de solicitudes</h1>
+  <p class="muted">23 solicitudes activas. 2 vencen hoy.</p>
+
+  <div class="filtros" role="group" aria-label="Filtrar por estado">
+    <button class="chip" type="button" aria-pressed="true">Todas <span class="conteo">23</span></button>
+    <button class="chip" type="button" aria-pressed="false">Evaluación <span class="conteo">4</span></button>
+    <button class="chip" type="button" aria-pressed="false">Pre-aprobadas <span class="conteo">6</span></button>
+    <button class="chip" type="button" aria-pressed="false">En revisión <span class="conteo">5</span></button>
+    <button class="chip" type="button" aria-pressed="false">Aprobadas <span class="conteo">3</span></button>
+    <button class="chip" type="button" aria-pressed="false">Documentos enviados <span class="conteo">2</span></button>
+    <button class="chip" type="button" aria-pressed="false">Desembolso pendiente <span class="conteo">3</span></button>
+  </div>
+  <div class="filtros">
+    <label class="campo"><span class="sr">Afiliado</span><select><option>Todos los afiliados</option><option>Empresa Ejemplo, S.A.</option><option>Constructora Modelo</option><option>Distribuidora Istmo</option></select></label>
+    <label class="campo"><span class="sr">Analista</span><select><option>Todos los analistas</option><option>Gisela</option></select></label>
+    <label class="campo" style="flex:1"><span class="sr">Buscar</span><input type="search" placeholder="Buscar por cliente, cédula o número de solicitud"></label>
+  </div>
+
+  <div class="tres">
+    <section class="card" aria-labelledby="lista">
+      <h2 id="lista" class="sr">Solicitudes</h2>
+      <div class="scroll"><table class="tabla compacta">
+        <caption class="sr">Solicitudes activas</caption>
+        <thead><tr><th scope="col">Solicitud</th><th scope="col">Cliente</th><th scope="col">Afiliado</th><th scope="col" class="num">Monto</th><th scope="col">Estado</th><th scope="col">Plazo</th></tr></thead>
+        <tbody>
+          <tr aria-current="true"><td><a href="#">SO-00099</a></td><td>M. P. (IS-001234)</td><td>Empresa Ejemplo, S.A.</td><td class="num">$300.00</td><td><span class="badge proceso">En revisión</span></td><td>18 h</td></tr>
+          <tr><td><a href="#">SO-00098</a></td><td>J. R. (IS-001230)</td><td>Empresa Ejemplo, S.A.</td><td class="num">$150.00</td><td><span class="badge ok">Pre-aprobada</span></td><td class="vence">2 h<span class="sr"> (urgente)</span></td></tr>
+          <tr><td><a href="#">SO-00097</a></td><td>A. G. (IS-001227)</td><td>Constructora Modelo</td><td class="num">$200.00</td><td><span class="badge proceso">Evaluación</span></td><td>31 h</td></tr>
+          <tr><td><a href="#">SO-00095</a></td><td>L. C. (IS-001219)</td><td>Constructora Modelo</td><td class="num">$300.00</td><td><span class="badge atencion">Desembolso pendiente</span></td><td class="vencido">Vencido hace 5 h</td></tr>
+          <tr><td><a href="#">SO-00094</a></td><td>R. M. (IS-001215)</td><td>Empresa Ejemplo, S.A.</td><td class="num">$100.00</td><td><span class="badge ok">Aprobada</span></td><td>40 h</td></tr>
+          <tr><td><a href="#">SO-00093</a></td><td>S. V. (IS-001211)</td><td>Distribuidora Istmo</td><td class="num">$200.00</td><td><span class="badge proceso">Documentos enviados</span></td><td>Firma pendiente 2 días</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted">Mostrando 6 de 23. <a href="#">Ver más</a></p>
+    </section>
+
+    <aside class="card" aria-labelledby="detalle">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <h2 id="detalle">SO-00099</h2>
+        <span class="badge proceso">En revisión</span>
+      </div>
+      <dl class="datos">
+        <dt>Cliente</dt><dd>M. P., IS-001234</dd>
+        <dt>Afiliado</dt><dd>Empresa Ejemplo, S.A.</dd>
+        <dt>Monto y plazo</dt><dd>$300.00 a 3 meses, 6 cuotas de $86.00</dd>
+        <dt>Ciclo de planilla</dt><dd>15 y 30. Primer descuento el 15 de octubre de 2026</dd>
+        <dt>Salario mensual</dt><dd>$1,500.00 declarado, igual al de la base</dd>
+        <dt>Descuentos actuales</dt><dd>$120.00 (8 %)</dd>
+        <dt>Con esta cuota</dt><dd>$292.00 (19 %, límite 20 %)</dd>
+        <dt>Identidad</dt><dd>Verificada el 2 de octubre, coincidencia facial 97 %</dd>
+        <dt>Documentos</dt><dd><a href="#">Cédula (2)</a>, <a href="#">Formulario</a></dd>
+      </dl>
+      <h3>Resumen del expediente</h3>
+      <p class="muted">Colaboradora con 4 años en la empresa, salario declarado igual al de la base, sin préstamos previos con Isthmus Capital. La cuota deja el descuento total en 19 % del salario, bajo el límite de 20 % del afiliado. Resumen generado automáticamente a partir del expediente.</p>
+      <div class="acciones">
+        <button class="btn" type="button">Aprobar</button>
+        <button class="btn secundario" type="button">Pedir información</button>
+        <button class="btn peligro" type="button">Rechazar</button>
+      </div>
+    </aside>
+  </div>
+
+  <p class="muted" style="margin-top:16px">Parámetros vigentes para Empresa Ejemplo, S.A.: interés 24 % mensual, descuento máximo 20 %, plazo 3 meses, desembolso en 48 horas. <a href="#">Editar en Parámetros</a></p>
+</div></main>
+</body>
+</html>

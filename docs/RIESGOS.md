@@ -13,6 +13,7 @@
 | R11 | Repo sin remoto: un fallo del VPS pierde el código | Operativo | Baja | Alto | Bajo (residual) | 00, 01 | **Cerrado** 02-oct-2026: remoto privado GitHub, `main` sincronizado, push tras cada commit |
 | R08 | Desembolso accidental por pruebas contra BG LIVE | Financiero | Media | Alto | Alto | 00, 05, 12 | Política definida; controles técnicos pendientes |
 | R12 | Sesión de Claude Code con acceso a N8N que contiene BG LIVE | Seguridad | Media | Alto | Alto | 00, 12 | Mitigado parcialmente (allowlist de tools) |
+| R37 | Puertos publicados por Docker (3000, 3001, 3002, 5678) alcanzables desde Internet saltándose ufw | Seguridad | Alta | Alto | Alto | 01 | **Cerrado** 02-oct-2026: regla `DOCKER-USER` persistente, verificada desde 12 nodos externos |
 | R01 | Desembolso a cuenta equivocada | Financiero | Media | Alto | Alto | 06, 07, 12 | Abierto |
 | R02 | Doble desembolso | Financiero | Media | Alto | Alto | 03, 12 | Abierto |
 | R04 | Fuga de PII | Seguridad / Cumplimiento | Media | Alto | Alto | 01, 02, 03, 04, 17 | Abierto |
@@ -58,6 +59,8 @@ Riesgos adicionales detectados durante el inventario: R13 a R22 (CRM/Sign) y **R
 - **Control detectivo.** `audit.audit_events` append-only con cadena de hashes; Supabase advisors (security) en cada brief con migración; revisión de logs por `request_id`; alertas de acceso inusual (muchas lecturas de un mismo usuario); `git grep` de patrones de token/cédula antes de cada commit.
 - **Brief.** 01 (hardening, Caddy), 02 (logs), 03 (RLS, auditoría), 04 (auth/OTP), 17 (verificación pública).
 - **Responsable.** Gianclaudio. **Estado:** Abierto.
+
+- **Avance Brief 01 (02-oct-2026).** Secretos de la app fuera del repo en `/etc/mp-app/*.env` (640 `root:deploy`); cabeceras de seguridad y CSP base listas en `ops/caddy/Caddyfile.mp.snippet` (se activan con el DNS el 03-oct); backups cifrados con restic.
 
 ## R05 — Caída de N8N a mitad de flujo
 - **Descripción.** N8N se reinicia o falla entre pasos (p. ej. después de crear el préstamo en LoanDisk y antes de escribir en CRM), dejando estados a medias en Supabase, CRM, LoanDisk o BG.
@@ -109,6 +112,8 @@ Riesgos adicionales detectados durante el inventario: R13 a R22 (CRM/Sign) y **R
 - **Brief.** 01 (backups), 03 (creación del proyecto en Pro).
 - **Responsable.** Gianclaudio. **Estado:** **Bloqueante** para Brief 03 y para producción.
 
+- **Avance Brief 01 (02-oct-2026).** Backups diarios del VPS con restic (08:00 UTC, retención 14 días, cifrados) con restauración probada (volumen de prueba y Caddyfile). Destino local hasta el Storage Box (03-oct); n8n excluido hasta la primera corrida de Gianclaudio (D3). Supabase: pendiente Checkpoint F.
+
 ## R11 — Repo sin remoto: un fallo del VPS pierde el código
 - **Descripción.** Hasta el 02-oct-2026 `mp-app` vivía solo en `/opt/mp-app` del VPS (sin `git remote`). Un fallo de disco, un `rm` equivocado o la pérdida del servidor borraba el código y los documentos del proyecto.
 - **Probabilidad / impacto / nivel.** ~~Alta / Alto / Crítico~~ → Baja / Alto / **Bajo (residual)** desde el 02-oct-2026.
@@ -116,6 +121,8 @@ Riesgos adicionales detectados durante el inventario: R13 a R22 (CRM/Sign) y **R
 - **Control detectivo.** `git status -sb` muestra `main...origin/main` sin `ahead` al cierre de cada brief; alerta si el push o el backup fallan (Brief 01).
 - **Brief.** 00 (decisión), 01 (backups).
 - **Responsable.** Gianclaudio. **Estado:** **Cerrado (02-oct-2026).** Residual: lo no empujado entre commit y push, cubierto por el backup diario.
+
+- **Avance Brief 01 (02-oct-2026).** `/opt/mp-app` incluido en el backup diario de restic como segunda copia.
 
 ## R12 — Sesión de Claude Code con acceso a N8N que contiene BG LIVE
 - **Descripción.** El MCP de N8N conectado a esta sesión puede ejecutar, modificar o publicar workflows, incluido el 06 prod. Un error del agente o una instrucción ambigua puede disparar una transferencia real o romper un flujo en producción.
@@ -164,4 +171,13 @@ Riesgos adicionales detectados durante el inventario: R13 a R22 (CRM/Sign) y **R
 | | **Estado R34: mitigado (recableado 02-oct-2026), pendiente validación en vivo. Nivel rebajado a Bajo el 02-oct-2026 (Gianclaudio): IDAnalyzer redirige al formulario al aprobar; el WhatsApp con el enlace es respaldo.** | | | | | |
 | R35 | **WhatsApp del 03 como mensaje de texto libre** (no plantilla) con enlace `http://solicitudmp.isthmuscap.com/`, token de Meta en el nodo, sin credencial `Meta WhatsApp MP`; rama de rechazo sin envío (marcador con número de relleno). | Fuera de la ventana de 24 h Meta rechaza el texto y el fallo se silencia (`continueRegularOutput`); el cliente no recibe el enlace de respaldo (el camino principal es la redirección de IDAnalyzer al formulario, 02-oct-2026) ni el rechazo; enlace sin TLS. | Plantilla aprobada (`fic_mp_codigo_acceso` o UTILITY nueva, Brief 13), enlace https, token en credencial y rotado; la app envía por `mp_notificar`. | `notificaciones` registra cada envío y su respuesta de Meta; alerta por errores de plantilla/ventana. | Alto | 04, 13 |
 | R36 | **Redacción de datos desactivada en N8N** (`redaction.production = false`): las ejecuciones guardan cédula, teléfono, email, cuenta, salario, tokens de sesión BG y **tokens de filevault de IDAnalyzer** (descarga de reportes KYC sin autenticación); el correo del 03 incluye el teléfono. | Fuga de PII y de los reportes KYC a quien lea el historial de ejecuciones. | Activar la redacción y acotar la retención de ejecuciones en N8N (cambio aprobado); en la app, logs sin PII (§10) y referencias en lugar de tokens. | Revisión trimestral de una ejecución al azar por workflow buscando PII; Supabase advisors. | Alto | 01, 03, 19 |
+
+## Hallazgos del Brief 01 en el VPS (02-oct-2026)
+
+| # | Hallazgo | Riesgo | Control preventivo / acción | Control detectivo | Nivel | Estado |
+|---|---|---|---|---|---|---|
+| R37 | Docker publica 3000 (Gotenberg), 3001, 3002 y 5678 (n8n) en `0.0.0.0` y sus reglas NAT saltan ufw: los cuatro puertos respondían desde Internet (n8n sin TLS). | Acceso directo a n8n y a las apps sin pasar por Caddy. | Regla `DOCKER-USER` (DROP de conexiones nuevas por `eth0` a esos puertos), aplicada en vivo y persistida en `/etc/ufw/after.rules`; reversa en `ops/ufw/docker-user-rollback.sh`; `mp-app` se publica solo en `127.0.0.1`. | Verificación externa (check-host.net) y conteo de la regla tras cada reinicio (`VENTANA_REINICIO_2026-10-02.md`). | Alto | **Cerrado** 02-oct-2026 (12 nodos externos: timeout; dominios HTTPS OK). |
+| R38 | `root` entra por SSH y la autenticación por contraseña está habilitada (`50-cloud-init.conf`). | Fuerza bruta contra root. | fail2ban activo (02-oct); usuario `deploy` creado con sudoers `MP_OPS`; drop-in `00-hardening.conf` listo, se aplica tras el Checkpoint A (login de `deploy` confirmado en una segunda ventana). | `sshd -T` tras el cambio; `fail2ban-client status sshd`. | Alto | **En curso**: espera Checkpoint A. |
+| R39 | `docker-ce` y `containerd.io` pendientes de actualizar: al instalarse reinician el daemon y todos los contenedores. | Corte no planificado de n8n, Cotizador y Max Motors. | Actualización solo en ventana (fin de semana, con la rotación de Postgres de n8n); el reinicio del 02-oct es solo por kernel. | `check-services.sh` antes y después. | Medio | Programado. |
+| R40 | Lectura indebida del compose de n8n por la sesión de Claude Code el 02-oct (expuso la contraseña de Postgres de n8n en la salida de una herramienta). | Secreto expuesto en el historial de la sesión. | Reglas `deny` en `.claude/settings.json` (lectura y comandos sobre la ruta de n8n); procedimiento de rotación `docs/ops/ROTACION_N8N_POSTGRES.md` para la ventana de fin de semana. | Rotación ejecutada por Gianclaudio y anotada en el inventario. | Alto | **Mitigado** (reglas activas); rotación pendiente. |
 

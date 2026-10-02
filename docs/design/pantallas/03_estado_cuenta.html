@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estado de cuenta - Isthmus Capital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../styles/tokens.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<header class="band"><div class="wrap"><img class="logo" src="../../../public/brand/logo.png" alt="Isthmus Capital"><span class="ejemplo">Datos de ejemplo</span></div></header>
+<main><div class="wrap">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <h1>Estado de cuenta</h1>
+    <span class="badge ok">Al día</span>
+  </div>
+  <p class="muted">Préstamo de $300.00 desde el 2 de octubre de 2026. Actualizado el 20 de noviembre a las 8:00 a. m.</p>
+
+  <section class="cotizacion" aria-labelledby="saldo">
+    <p class="etiqueta" id="saldo">Saldo pendiente</p>
+    <p class="cifra">$258.00</p>
+    <dl>
+      <dt>Próxima cuota</dt><dd>$86.00 el 30 de noviembre</dd>
+      <dt>Cuotas pagadas</dt><dd>3 de 6</dd>
+    </dl>
+  </section>
+
+  <h2>Cuotas</h2>
+  <div class="scroll"><table class="tabla">
+    <caption class="sr">Calendario de cuotas del préstamo</caption>
+    <thead><tr><th scope="col">N.º</th><th scope="col">Fecha</th><th scope="col" class="num">Cuota</th><th scope="col" class="num">Saldo</th><th scope="col">Estado</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>15 oct 2026</td><td class="num">$86.00</td><td class="num">$430.00</td><td>Pagada</td></tr>
+      <tr><td>2</td><td>31 oct 2026</td><td class="num">$86.00</td><td class="num">$344.00</td><td>Pagada</td></tr>
+      <tr><td>3</td><td>15 nov 2026</td><td class="num">$86.00</td><td class="num">$258.00</td><td>Pagada</td></tr>
+      <tr aria-current="true"><td>4</td><td>30 nov 2026</td><td class="num">$86.00</td><td class="num">$172.00</td><td><strong>Próxima</strong></td></tr>
+      <tr><td>5</td><td>15 dic 2026</td><td class="num">$86.00</td><td class="num">$86.00</td><td>Pendiente</td></tr>
+      <tr><td>6</td><td>31 dic 2026</td><td class="num">$86.00</td><td class="num">$0.00</td><td>Pendiente</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Cada cuota incluye $50.00 de capital y $36.00 de interés. Tu empresa la descuenta de tu planilla y la envía a Isthmus Capital.</p>
+
+  <div class="acciones">
+    <a class="btn secundario" href="#">Descargar cronograma en PDF</a>
+    <a class="btn texto" href="#">Ver recibos de pago</a>
+  </div>
+</div></main>
+</body>
+</html>

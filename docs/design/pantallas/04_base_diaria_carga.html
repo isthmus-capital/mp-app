@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Base de empleados - Portal del afiliado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../styles/tokens.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <img class="logo" src="../../../public/brand/logo.png" alt="Isthmus Capital">
+  <nav aria-label="Secciones del portal">
+    <a href="#" aria-current="page">Base de empleados</a><a href="#">Solicitudes</a><a href="#">Remesas</a><a href="#">Convenio</a>
+  </nav>
+  <span class="ejemplo">Datos de ejemplo</span>
+</div></header>
+<main><div class="wrap">
+  <h1>Base de empleados</h1>
+  <p class="muted">Empresa Ejemplo, S.A. Última carga el 1 de octubre de 2026 con 405 empleados activos.</p>
+
+  <div class="dos">
+    <section class="card" aria-labelledby="cargar">
+      <h2 id="cargar">Cargar Base Diaria</h2>
+      <div class="zona">
+        <p><strong>Arrastra el archivo aquí</strong></p>
+        <p class="muted">o</p>
+        <button class="btn secundario" type="button">Seleccionar archivo</button>
+        <p class="muted" style="margin-top:10px">XLSX o CSV con las columnas de la plantilla.</p>
+      </div>
+      <p class="muted" style="margin-top:14px">Usa siempre la plantilla: conserva los ceros de códigos y teléfonos y deja las fechas en el formato correcto. Si cambia una columna, cambia también en la plantilla.</p>
+      <a class="btn texto" href="#" style="padding-left:0">Descargar plantilla (XLSX)</a>
+    </section>
+
+    <section class="card" aria-labelledby="revision">
+      <h2 id="revision">Revisión de base_2026-10-02.xlsx</h2>
+      <div class="tiles">
+        <div class="tile"><p class="cifra">412</p><p class="muted">filas leídas</p></div>
+        <div class="tile"><p class="cifra">405</p><p class="muted">listas para cargar</p></div>
+        <div class="tile"><p class="cifra error">7</p><p class="muted">con error</p></div>
+        <div class="tile"><p class="cifra alerta">3</p><p class="muted">advertencias</p></div>
+      </div>
+
+      <h3>Filas con error</h3>
+      <p class="muted">Estas 7 filas no se cargan hasta que corrijas el archivo. Las otras 405 sí se pueden cargar ahora.</p>
+      <div class="scroll"><table class="tabla compacta">
+        <caption class="sr">Errores encontrados en el archivo</caption>
+        <thead><tr><th scope="col">Fila</th><th scope="col">Cédula</th><th scope="col">Columna</th><th scope="col">Qué pasa</th><th scope="col">Cómo corregirlo</th></tr></thead>
+        <tbody>
+          <tr><td>18</td><td>8-***-0412</td><td><code>fecha_ingreso</code></td><td>La fecha está escrita como 3/15/2024.</td><td>Escríbela como 2024-03-15.</td></tr>
+          <tr><td>52</td><td>8-***-1187</td><td><code>salario_neto</code></td><td>Está vacío y es obligatorio.</td><td>Escribe el salario neto mensual, por ejemplo 850.00.</td></tr>
+          <tr><td>77</td><td>8-***-2231</td><td><code>cedula</code></td><td>Se repite en la fila 12.</td><td>Deja una sola fila por persona.</td></tr>
+          <tr><td>90</td><td>4-***-0098</td><td><code>email</code></td><td>"correo@" no es un correo válido.</td><td>Revisa que tenga usuario y dominio, como nombre@empresa.com.</td></tr>
+          <tr><td>131</td><td>8-***-3310</td><td><code>employee_id</code></td><td>Está vacío y es obligatorio.</td><td>Escribe el código de empleado que usa tu planilla.</td></tr>
+          <tr><td>204</td><td>8-***-0954</td><td><code>estatus_laboral</code></td><td>"Activo " tiene un espacio al final.</td><td>Elige el valor de la lista desplegable de la plantilla.</td></tr>
+          <tr><td>388</td><td>1-***-5520</td><td><code>fecha_actualizacion</code></td><td>Es una fecha futura (2026-11-01).</td><td>Usa la fecha en que actualizaste el dato.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Advertencias</h3>
+      <p class="muted">Estas filas se cargan igual. Revísalas si algo no cuadra.</p>
+      <div class="scroll"><table class="tabla compacta">
+        <caption class="sr">Advertencias del archivo</caption>
+        <thead><tr><th scope="col">Fila</th><th scope="col">Cédula</th><th scope="col">Columna</th><th scope="col">Qué pasa</th><th scope="col">Qué revisar</th></tr></thead>
+        <tbody>
+          <tr><td>33</td><td>8-***-7701</td><td><code>salario_neto</code></td><td>Pasó de 1,200.00 a 1,950.00 (más de 30 %).</td><td>Confirma el nuevo salario con Nómina.</td></tr>
+          <tr><td>140</td><td>8-***-2890</td><td><code>salario_bruto</code></td><td>Es menor que el salario neto.</td><td>Revisa los dos valores.</td></tr>
+          <tr><td>301</td><td>3-***-0117</td><td><code>estatus_laboral</code></td><td>No apareció en las últimas 3 cargas y ahora vuelve.</td><td>Confirma su estatus laboral.</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="acciones fila">
+        <button class="btn" type="button">Cargar las 405 filas válidas</button>
+        <button class="btn secundario" type="button">Corregir y volver a cargar</button>
+        <a class="btn texto" href="#">Descargar este reporte</a>
+      </div>
+    </section>
+  </div>
+</div></main>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solicitud, paso 3 de 6 - Isthmus Capital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../styles/tokens.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<header class="band"><div class="wrap"><img class="logo" src="../../../public/brand/logo.png" alt="Isthmus Capital"><span class="ejemplo">Datos de ejemplo</span></div></header>
+<main class="con-pie"><div class="wrap">
+  <p class="muted" id="paso">Paso 3 de 6: datos de la solicitud</p>
+  <div class="progreso" role="progressbar" aria-labelledby="paso" aria-valuenow="3" aria-valuemin="1" aria-valuemax="6">
+    <span class="hecho"></span><span class="hecho"></span><span class="actual" aria-current="step"></span><span></span><span></span><span></span>
+  </div>
+  <h1>¿Cuánto necesitas?</h1>
+  <p class="muted">Elige el monto y el plazo. Verás tu cuota antes de continuar.</p>
+
+  <h2 id="monto">Monto</h2>
+  <div class="chips" role="group" aria-labelledby="monto">
+    <button class="chip" type="button" aria-pressed="false">$100</button>
+    <button class="chip" type="button" aria-pressed="false">$150</button>
+    <button class="chip" type="button" aria-pressed="false">$200</button>
+    <button class="chip" type="button" aria-pressed="true">$300</button>
+  </div>
+
+  <h2 id="plazo">Plazo</h2>
+  <div class="chips" role="group" aria-labelledby="plazo" aria-describedby="plazo-nota">
+    <button class="chip" type="button" aria-pressed="true">3 meses</button>
+    <button class="chip" type="button" disabled>6 meses</button>
+    <button class="chip" type="button" disabled>9 meses</button>
+    <button class="chip" type="button" disabled>12 meses</button>
+  </div>
+  <p class="muted" id="plazo-nota">Por ahora tu empresa ofrece el plazo de 3 meses.</p>
+
+  <fieldset style="border:0;padding:0;margin:0">
+    <legend><h2 style="margin-bottom:10px">¿Qué días recibes tu salario?</h2></legend>
+    <label class="radio elegido"><input type="radio" name="ciclo" checked><span>Los días 15 y 30<small>Según el registro de tu empresa</small></span></label>
+    <label class="radio"><input type="radio" name="ciclo"><span>Los días 10 y 25</span></label>
+  </fieldset>
+
+  <section class="cotizacion" aria-labelledby="cuota-titulo">
+    <p class="etiqueta" id="cuota-titulo">Tu cuota quincenal</p>
+    <p class="cifra">$86.00</p>
+    <dl>
+      <dt>Cuotas</dt><dd>6 de $86.00</dd>
+      <dt>Primer descuento</dt><dd>15 de octubre de 2026</dd>
+      <dt>Interés</dt><dd>24 % mensual sobre el monto</dd>
+      <dt>Total a pagar</dt><dd>$516.00</dd>
+    </dl>
+    <p class="nota">Se descuenta de tu planilla los días 15 y 30. Puedes cambiar el monto o el plazo antes de enviar la solicitud.</p>
+  </section>
+</div></main>
+<footer class="pie"><div class="wrap acciones">
+  <button class="btn bloque" type="button">Continuar</button>
+  <button class="btn texto bloque" type="button">Guardar y seguir después</button>
+</div></footer>
+</body>
+</html>

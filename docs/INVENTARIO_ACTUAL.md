@@ -489,11 +489,14 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 
 | Acceso | Estado 02-oct-2026 | Evidencia |
 |---|---|---|
-| SSH al VPS desde VS Code | OK | Esta sesión corre en `isthmus-n8n` (`5.78.214.136`) como `root`; Brief 01 crea `deploy`. Contenedores activos: `cotizador-app` :3001, `maxmotors-app` :3002, `n8n-n8n-1` :5678, `n8n-postgres-1`, `gotenberg` :3000. Node 22.22.1, npm 9.2.0, Docker 29.7.2, Caddy, Python 3.14. |
-| DNS `mp.isthmuscap.com` | **Sin registro A** | `dig +short` vacío. Idem `staging-mp.` y `microprestamos.`. `automation.isthmuscap.com` → 5.78.214.136. Crear en el Brief 01. |
+| SSH al VPS desde VS Code | OK | Esta sesión corre en `isthmus-n8n` (`5.78.214.136`) como `root`; Brief 01 crea `deploy`. **02-oct-2026:** `deploy` creado (grupo `docker`, sudoers `MP_OPS`, llave copiada, repo y configuración de Claude Code traspasados); el hardening de sshd espera el Checkpoint A (login de `deploy` confirmado por Gianclaudio en una segunda ventana). Contenedores activos: `cotizador-app` :3001, `maxmotors-app` :3002, `n8n-n8n-1` :5678, `n8n-postgres-1`, `gotenberg` :3000. Node 22.22.1, npm 9.2.0, Docker 29.7.2, Caddy, Python 3.14. |
+| DNS `mp.isthmuscap.com` | **Sin registro A** | `dig +short` vacío. Idem `staging-mp.` y `microprestamos.`. `automation.isthmuscap.com` → 5.78.214.136. Crear en el Brief 01. **02-oct:** se crean el 03-oct (Gisela recibe el código de GoDaddy); Caddy ya preparado en `ops/caddy/` y página de espera en `/var/www/mp-placeholder`. |
 | Supabase `isthmus-mp` | **Pendiente** (upgrade Pro) | §10 |
-| Token WhatsApp en `.env` | OK | `.env` con permisos 600 (root); 5 claves `WHATSAPP_*`; `WHATSAPP_PHONE_NUMBER_ID = 1184886231372996`, `WHATSAPP_BUSINESS_ACCOUNT_ID = 4466216373701343`, `WHATSAPP_APP_ID = 1360854289567229`, `WHATSAPP_TEMPLATE_OTP = fic_mp_codigo_acceso` (coinciden con §14); `WHATSAPP_TOKEN` presente (no se imprime). Pendiente Brief 04: validar con el Access Token Debugger y planificar rotación. |
+| Token WhatsApp en `.env` | OK | **02-oct-2026:** en `/etc/mp-app/staging.env` y `production.env` (640 `root:deploy`, Brief 01); antes `/opt/mp-app/.env` con permisos 600 (root); 5 claves `WHATSAPP_*`; `WHATSAPP_PHONE_NUMBER_ID = 1184886231372996`, `WHATSAPP_BUSINESS_ACCOUNT_ID = 4466216373701343`, `WHATSAPP_APP_ID = 1360854289567229`, `WHATSAPP_TEMPLATE_OTP = fic_mp_codigo_acceso` (coinciden con §14); `WHATSAPP_TOKEN` presente (no se imprime). Pendiente Brief 04: validar con el Access Token Debugger y planificar rotación. |
 | Credencial N8N `Meta WhatsApp MP` | **Sin confirmar** | Bloqueo del MCP n8n (sección 0). Gianclaudio la crea o confirma. |
+| Firewall de Docker | **OK** (02-oct-2026) | Regla `DOCKER-USER` bloquea 3000/3001/3002/5678 desde Internet; verificada desde 12 nodos externos (check-host.net); dominios HTTPS responden. Ver R37. |
+| Backups del VPS | **OK, local** (02-oct-2026) | restic diario 08:00 UTC, retención 14 días, cifrado; restauración probada (volumen y Caddyfile). Destino local hasta el Storage Box (03-oct). n8n excluido hasta la primera corrida de Gianclaudio (D3). |
+| fail2ban | **OK** (02-oct-2026) | Jail `sshd`, backend systemd, 5 intentos / 10 min → 1 h. |
 | Playwright en el VPS | **No soportado nativo** | Playwright 1.56 no soporta Ubuntu 26.04 (`npx playwright install chromium` falla) y el MCP de Playwright no encuentra Chrome. Brief 02: correr Playwright en Docker (`mcr.microsoft.com/playwright`). Las capturas del Brief 00 se hicieron con Gotenberg (`gotenberg/gotenberg:8`, v8.34.0, contenedor existente). |
 | Remoto git | **OK** (02-oct-2026) | `origin` = `https://github.com/isthmus-capital/mp-app.git` (privado), `main` sincronizado; regla en `CLAUDE.md`: cada commit va seguido de `git push`. R11 cerrado. |
 | Diseño: 5 pantallas | **Pendiente** (cierre del Brief 01) | Decisión 02-oct-2026 (§19): se preparan en HTML con los tokens FIC y se revisan con Gianclaudio en celular (no con Diego); ver `docs/design/README.md`. |
@@ -511,9 +514,9 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 6. Gisela: habilitar el esquema 15-30 (4418) en el producto 383523; confirmar cómo LoanDisk reparte los centavos en el cronograma del 11909610.
 7. Diego: el paso APPROVER de Gisela en los templates Contrato y Carta **queda como está hasta que él decida** (decisión 02-oct-2026, R13); semántica de `L_mite_para_nuevos_descuentos` y `Fecha_de_corte_de_planilla`.
 8. Crear `Modo_Validacion` en CRM `Afiliados` y ampliar picklists `Cuotas`/`Monto_Solicitado` (Brief 05, cambios en CRM con aprobación).
-9. Crear DNS `mp.` y `staging-mp.` (Brief 01).
+9. Crear DNS `mp.` y `staging-mp.` (Brief 01). **03-oct-2026** (Gisela recibe el código de GoDaddy); después: añadir `ops/caddy/Caddyfile.mp.snippet` a `/etc/caddy/Caddyfile`, `caddy validate`, `systemctl reload caddy`, verificar TLS y 503 con marca.
 10. Credencial N8N `Meta WhatsApp MP`: **no existe** (`list_credentials`); crearla con el token del `.env` (Gianclaudio) antes del Brief 04.
-11. Preparar las 5 pantallas en HTML con los tokens FIC al cierre del Brief 01 y revisarlas con Gianclaudio en celular (decisión 02-oct-2026, §19; no con Diego); congelar lo aprobado en `docs/design/` antes del Brief 02.
+11. Preparar las 5 pantallas en HTML con los tokens FIC al cierre del Brief 01 y revisarlas con Gianclaudio en celular (decisión 02-oct-2026, §19; no con Diego); congelar lo aprobado en `docs/design/` antes del Brief 02. **Hecho el 02-oct** (`docs/design/pantallas/`, capturas 390/1440 y Artifact privado); **pendiente la revisión en celular y la aprobación.**
 12. Brief 02: Playwright en Docker (no hay soporte nativo de Chromium en Ubuntu 26.04).
 13. Validar en vivo el 03 KYC corregido (publicado el 02-oct-2026) con el próximo KYC real; anotar el resultado aquí.
 14. Diego: aprobar en Banca en Línea la transferencia BG código 18524 de SO-00079. **No existe 07 ni polling**: el estado final no llega a CRM; `Aprobaciones_BG` nunca se escribe. La app implementa `mp_bg_polling` (Brief 12).
@@ -524,3 +527,10 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 20. WhatsApp del 03: pasar a plantilla aprobada (`fic_mp_codigo_acceso` o una UTILITY nueva) con enlace https; mover el token de Meta a la credencial `Meta WhatsApp MP`; implementar la rama de rechazo.
 21. N8N: activar la redacción de datos en ejecuciones (`redaction.production`) y revisar la retención; los tokens de filevault de IDAnalyzer permiten descargar los reportes KYC sin autenticación.
 15. Brief 06/10: abrir el Contrato firmado de SO-00078 y anotar el `monto_total` real (172.00 o 172.02). La redefinición de `total_pagar` en §4.6-a ya está aprobada y escrita (v5.1, 02-oct-2026).
+22. **Checkpoint A (Gianclaudio):** entrar por VS Code como `deploy@5.78.214.136`, probar `docker ps` y `sudo -n systemctl status caddy`, poner contraseña con `passwd deploy` desde root y confirmar en el chat; entonces se aplica `00-hardening.conf` (root y contraseñas fuera).
+23. **Reinicio del 02-oct 22:00 Panamá** solo por kernel, con `docs/ops/VENTANA_REINICIO_2026-10-02.md`; Gianclaudio verifica las restart policies y pega el `post-reboot`.
+24. **Storage Box de Hetzner (03-oct):** registrar la llave `/root/.ssh/id_ed25519_storagebox.pub`, cambiar `RESTIC_REPOSITORY` y `restic init` (runbook §6).
+25. **Primera corrida completa del backup con n8n** la ejecuta Gianclaudio (`sudo MP_BACKUP_INCLUDE_N8N_OVERRIDE=1 /usr/local/bin/mp-backup.sh`) y luego pone `MP_BACKUP_INCLUDE_N8N=1`.
+26. **Ventana de fin de semana (Gianclaudio):** rotación de la contraseña de Postgres de n8n y actualización de paquetes (`docs/ops/ROTACION_N8N_POSTGRES.md`).
+27. Brief 02: activar `mp-healthcheck.timer` cuando exista `/api/health`.
+

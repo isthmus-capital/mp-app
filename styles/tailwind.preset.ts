@@ -20,6 +20,7 @@ const ficPreset: Partial<Config> = {
           "gris-100": "var(--fic-gris-100)",
           "gris-200": "var(--fic-gris-200)",
           "gris-300": "var(--fic-gris-300)",
+          "gris-400": "var(--fic-gris-400)",
           "gris-600": "var(--fic-gris-600)",
           texto: "var(--fic-texto)",
           exito: "var(--fic-exito)",

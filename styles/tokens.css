@@ -16,6 +16,7 @@
   --fic-blanco:      #FFFFFF;
   --fic-gris-200:    #E3E8F0;  /* bordes, divisores */
   --fic-gris-300:    #C9D2DF;  /* bordes de inputs */
+  --fic-gris-400:    #7F8A9C;  /* bordes de inputs y chips: 3.5:1 sobre blanco (WCAG 1.4.11; añadido en el Brief 01) */
   --fic-texto:       #16213A;  /* texto principal */
 
   /* Tipografía */
