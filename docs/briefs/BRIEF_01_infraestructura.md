@@ -14,7 +14,7 @@ VPS Hetzner CPX31 `5.78.214.136`, Ubuntu, Docker Compose + Caddy. Hoy corre como
 6. `/api/health` que verifique DB, N8N, token Zoho y LoanDisk; alerta por WhatsApp al admin si falla.
 
 ## Criterio de aceptación
-- Login root por SSH rechazado; `deploy` funciona desde VS Code Remote-SSH.
+- Login root por SSH rechazado; `deploy` funciona desde VS Code Remote-SSH. — **Fase 1 cumplida 02-oct-2026** (contraseñas cerradas, root solo por llave, `deploy` funciona); el rechazo de root es la fase 2, cuando `deploy` opere Cotizador y Max Motors (plan Task 3b).
 - Cotizador y Max Motors siguen respondiendo (verificar antes y después).
 - `https://staging-mp.isthmuscap.com` responde con certificado válido.
 - Restauración de un backup probada en staging, con evidencia en la salida.

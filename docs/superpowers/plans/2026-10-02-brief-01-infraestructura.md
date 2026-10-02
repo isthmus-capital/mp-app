@@ -224,7 +224,7 @@ LoginGraceTime 30
 X11Forwarding no
 ```
 
-- [ ] **Step 3: Instalar y recargar (Gianclaudio, sesión root; la segunda ventana como `deploy` queda abierta)**
+- [x] **Step 3: Instalar y recargar (Gianclaudio, sesión root; la segunda ventana como `deploy` queda abierta)** — hecho 02-oct-2026 17:42 UTC; `sshd -T` verificado por Claude Code (solo lectura): los siete valores coinciden; drop-in instalado idéntico al del repo (`diff` vacío).
 
 ```bash
 install -m 644 -o root -g root /opt/mp-app/ops/ssh/00-hardening.conf /etc/ssh/sshd_config.d/00-hardening.conf
@@ -234,7 +234,7 @@ sshd -T 2>/dev/null | grep -Ei '^(permitrootlogin|passwordauthentication|kbdinte
 ```
 Expected: `sshd config OK`; luego `permitrootlogin prohibit-password`, `passwordauthentication no`, `kbdinteractiveauthentication no`, `pubkeyauthentication yes`, `maxauthtries 4`, `logingracetime 30`, `x11forwarding no`. Si `sshd -t` falla: `rm /etc/ssh/sshd_config.d/00-hardening.conf` y no recargar.
 
-- [ ] **Step 4: Prueba desde fuera (Gianclaudio, laptop, sin cerrar las sesiones abiertas)**
+- [x] **Step 4: Prueba desde fuera (Gianclaudio, laptop, sin cerrar las sesiones abiertas)** — hecho 02-oct-2026: root sin llave `Permission denied (publickey)` rc=255; root con llave `isthmus-n8n`; deploy `isthmus-n8n`. **Criterio de aceptación 1: fase 1 cumplida** (contraseñas cerradas); la parte "root rechazado" queda para la fase 2 (Task 3b).
 
 ```bash
 ssh -o BatchMode=yes -o PubkeyAuthentication=no root@5.78.214.136 true; echo rc=$?   # contraseña cerrada
@@ -243,7 +243,7 @@ ssh deploy@5.78.214.136 hostname
 ```
 Expected: primera línea `Permission denied (publickey)` y `rc=255`; las otras dos `isthmus-n8n`. Pegar las salidas en el chat.
 
-- [ ] **Step 5: Commit (tres órdenes separadas, regla de CLAUDE.md)**
+- [x] **Step 5: Commit (tres órdenes separadas, regla de CLAUDE.md)** — `f43a696` (drop-in y plan) y el commit de cierre de la fase 1.
 
 `git add ops/ssh/00-hardening.conf` · `git commit -m "ops(brief-01): sshd hardening phase 1 (no passwords, root key-only)"` · `git push origin main`
 
