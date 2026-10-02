@@ -528,9 +528,9 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 21. N8N: activar la redacción de datos en ejecuciones (`redaction.production`) y revisar la retención; los tokens de filevault de IDAnalyzer permiten descargar los reportes KYC sin autenticación.
 15. Brief 06/10: abrir el Contrato firmado de SO-00078 y anotar el `monto_total` real (172.00 o 172.02). La redefinición de `total_pagar` en §4.6-a ya está aprobada y escrita (v5.1, 02-oct-2026).
 22. **Checkpoint A (Gianclaudio):** entrar por VS Code como `deploy@5.78.214.136`, probar `docker ps` y `sudo -n systemctl status caddy`, poner contraseña con `passwd deploy` desde root y confirmar en el chat; entonces se aplica `00-hardening.conf` (root y contraseñas fuera).
-23. **Reinicio del 02-oct 22:00 Panamá** solo por kernel, con `docs/ops/VENTANA_REINICIO_2026-10-02.md`; Gianclaudio verifica las restart policies y pega el `post-reboot`.
+23. **Reinicio por kernel:** no se hizo el 02-oct; se fusionó en la ventana de fin de semana (ítem 26).
 24. **Storage Box de Hetzner (03-oct):** registrar la llave `/root/.ssh/id_ed25519_storagebox.pub`, cambiar `RESTIC_REPOSITORY` y `restic init` (runbook §6).
 25. **Primera corrida completa del backup con n8n** la ejecuta Gianclaudio (`sudo MP_BACKUP_INCLUDE_N8N_OVERRIDE=1 /usr/local/bin/mp-backup.sh`) y luego pone `MP_BACKUP_INCLUDE_N8N=1`.
-26. **Ventana de fin de semana (Gianclaudio):** rotación de la contraseña de Postgres de n8n y actualización de paquetes (`docs/ops/ROTACION_N8N_POSTGRES.md`).
+26. **Ventana de mantenimiento del fin de semana (Gianclaudio)**, checklist único `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md`: dump previo → rotación de Postgres de n8n → apt upgrade (incluye docker-ce) → reinicio de kernel → post-reboot → verificación externa de puertos (check-host.net) → verificación HTTPS de n8n, Cotizador y Max Motors.
 27. Brief 02: activar `mp-healthcheck.timer` cuando exista `/api/health`.
 
