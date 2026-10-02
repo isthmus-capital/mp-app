@@ -16,6 +16,7 @@ Reemplaza el proceso actual de Zoho Creator + Zoho Flow + Monday, que corre en p
 - Tests antes que implementación en el motor de reglas, cálculo de letra y transiciones de estado.
 - Verifica antes de decir "listo": corre el comando, lee la salida, muestra la evidencia.
 - **Cada `git commit` va seguido de `git push`** a `origin` (repo privado `https://github.com/isthmus-capital/mp-app.git`). Nunca dejes commits sin empujar al cerrar una sesión.
+- **Git en tres órdenes separadas**: `git add <rutas>`, `git commit -m "..."` y `git push origin main`, cada una en su propia llamada (nada de `&&`, `;` ni pipes). La regla `Bash(git push origin main)` de `.claude/settings.json` se queda exacta (sin `:*`, que permitiría `--force`) y el modo de permisos no se cambia. Si el clasificador bloquea una orden, **no se rodea** (ni partida, ni con otra herramienta): se entrega a Gianclaudio el comando exacto y lo ejecuta él.
 
 ## Arquitectura (resumen)
 - **Supabase** (`isthmus-mp`): estado operativo, auth, auditoría. La app nunca llama a Zoho en el request path del cliente.
