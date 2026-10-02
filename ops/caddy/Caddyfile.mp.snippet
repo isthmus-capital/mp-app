@@ -1,0 +1,49 @@
+# ===== mp-app (Brief 01) — se añade al final de /etc/caddy/Caddyfile cuando existan los registros DNS =====
+(fic_security) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+		-Server
+	}
+}
+
+(fic_site) {
+	import fic_security
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:{args[0]} {
+		header_up X-Forwarded-Proto https
+	}
+	handle_errors {
+		@down expression `{http.error.status_code} in [502, 503, 504]`
+		handle @down {
+			header Retry-After "120"
+			root * /var/www/mp-placeholder
+			@logo path /logo.png
+			handle @logo {
+				file_server
+			}
+			rewrite * /index.html
+			file_server {
+				status 503
+			}
+		}
+	}
+	log {
+		output file /var/log/caddy/{args[1]}.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+staging-mp.isthmuscap.com {
+	import fic_site 3013 staging-mp
+}
+
+mp.isthmuscap.com {
+	import fic_site 3003 mp
+}
