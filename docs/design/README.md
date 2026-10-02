@@ -18,7 +18,7 @@ Pantallas pendientes (§15): wizard del cliente (paso de monto), línea de tiemp
 - **Colores**: los 8 tokens de §15 se copian literalmente. Se añaden cuatro neutros derivados (`--fic-blanco`, `--fic-gris-200`, `--fic-gris-300`, `--fic-texto`) como propuesta; Diego puede ajustarlos en la sesión de diseño.
 - **Tipografía**: Manrope (geométrica, sobria, cifras tabulares con `font-feature-settings: "tnum"`), con fallback del sistema. **Propuesta sujeta a la sesión de diseño con Diego antes del Brief 02.** Si cambia, se edita solo `--fic-font-sans`.
 - **Estados del préstamo**: se usan los nombres de LoanDisk (Current, Due Today, Missed Repayment, Arrears, Past Maturity) con colores de la paleta FIC, no los de LoanDisk. El mapeo vive en `tokens.css` como `--estado-*` y en el preset como `estado.*`. Cambiar un color es cambiar un token.
-- **Sin gradientes, sin sombras marcadas, un acento por pantalla**: una sola sombra permitida (`--fic-shadow-sm`). Tamaño de toque mínimo `--fic-touch-min: 44px` (§9).
+- **Sin gradientes, sin sombras marcadas, un acento por pantalla**: una sola sombra permitida (`--fic-shadow-sm`); el preset define `theme.boxShadow` fuera de `extend` para retirar `shadow-md/lg/xl/2xl`. `fontSize` lleva tuplas con line-height para no perder los valores por defecto de Tailwind. Tamaño de toque mínimo `--fic-touch-min: 44px` (§9).
 - **Fuente única de verdad**: los valores viven en `tokens.css`; el preset de Tailwind solo referencia variables. Por eso los modificadores de opacidad de Tailwind (`bg-fic-azul/50`) no aplican; si el Brief 02 los necesita, se exponen canales RGB.
 
 ## Cómo cablear en el Brief 02
@@ -29,7 +29,7 @@ Pantallas pendientes (§15): wizard del cliente (paso de monto), línea de tiemp
    import ficPreset from "./styles/tailwind.preset";
    export default { presets: [ficPreset], content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"] };
    ```
-3. Fuente: `next/font/google` con `Manrope` y `variable: "--fic-font-sans"` (o la fuente que apruebe Diego).
+3. Fuente: `next/font/google` con `Manrope` y `variable: "--font-manrope"`; `tokens.css` ya declara `--fic-font-sans: var(--font-manrope, "Manrope"), …`, así que no se redefine `--fic-font-sans` (evita que cascadas distintas cambien el fallback). Si Diego aprueba otra fuente, cambian `--font-manrope` y el fallback en `tokens.css`.
 4. `StatusBadge` usa `estado.*` del preset; nunca hex en componentes.
 
 ## Cómo regenerar las capturas

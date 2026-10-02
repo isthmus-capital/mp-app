@@ -3,6 +3,7 @@
 
 > Uso: pegar este documento como `docs/00_PROMPT_MAESTRO.md` en el repo y referenciarlo desde `CLAUDE.md`. Claude Code debe leerlo completo antes del Brief 01.
 > Idioma del producto: español (Panamá). Idioma del código/commits: inglés.
+> **Versión 5.1 — 2 oct 2026:** §4.6-a: `total_pagar` = capital + interés flat; cuota redondeada a centavos con ajuste en la última cuota; alerta si LoanDisk difiere (decisión de Gianclaudio, Brief 00).
 > **Versión 5 — 1 oct 2026:** incorpora lo aprendido al poner en producción la v1 Zoho + N8N (§18): producto y ciclos de LoanDisk, sobre único de Sign, ambiente QA de BG, remitente de correos.
 > **Versión 4 — 29 sep 2026:** reglas financieras de la v1 formalizadas (§4.6): inicio de descuento por ciclo de planilla (afiliados con uno o dos ciclos), cuota quincenal para 3/6/9/12 meses, plantilla descargable de Base Diaria.
 > **Versión 3 — 28 sep 2026:** parametrización total (§4.4), usuarios y permisos (§4.5), plantilla WhatsApp aprobada (§14), convenio de afiliación firmado en físico, BG en producción.
@@ -209,18 +210,21 @@ Reglas:
 
 ```
 cuotas        = plazo_meses × 2
-cuota         = redondear2( monto / cuotas + monto × tasa_afiliado / 100 / 2 )
-total_pagar   = cuota × cuotas
+interes_total = monto × tasa_afiliado / 100 × plazo_meses          (flat sobre el monto original)
+total_pagar   = monto + interes_total                              (capital + interés flat; es el total de LoanDisk)
+cuota         = redondear2( total_pagar / cuotas )                 (= monto/cuotas + monto × tasa_afiliado/100/2)
+ultima_cuota  = total_pagar − cuota × (cuotas − 1)                 (absorbe la diferencia de centavos)
 tasa_nominal  = tasa_efectiva = tasa_afiliado   (mismo número en los documentos)
 ```
-Verificado en SO-00077: $100, tasa 24 %, 3 meses → 6 cuotas de 28.67, total 172.00.
+Decisión 02-oct-2026 (Gianclaudio): `total_pagar` es capital + interés flat, **no** `cuota × cuotas`; la cuota se redondea a centavos y el ajuste va en la última cuota. El calendario que devuelve LoanDisk es la fuente de verdad del snapshot; si LoanDisk difiere del total o de las cuotas calculadas, `mp_loandisk_crear` **alerta** al analista y a Diego y no se absorbe en silencio.
+Verificado en SO-00078 (préstamo 11909610): $100, tasa 24 %, 3 meses → total 172.00, 5 cuotas de 28.67 + última de 28.65. SO-00079 (11913796): $300, 24 %, 3 meses → total 516.00, 6 cuotas de 86.00.
 
-| Ejemplo $300, tasa 4 % | Cuotas | Cuota | Total |
-|---|---|---|---|
-| 3 meses | 6 | 56.00 | 336 |
-| 6 meses | 12 | 31.00 | 372 |
-| 9 meses | 18 | 22.67 | 408 |
-| 12 meses | 24 | 18.50 | 444 |
+| Ejemplo $300, tasa 4 % | Cuotas | Cuota | Última cuota | Total |
+|---|---|---|---|---|
+| 3 meses | 6 | 56.00 | 56.00 | 336.00 |
+| 6 meses | 12 | 31.00 | 31.00 | 372.00 |
+| 9 meses | 18 | 22.67 | 22.61 | 408.00 |
+| 12 meses | 24 | 18.50 | 18.50 | 444.00 |
 
 Solo 3 meses queda habilitado al inicio; 6/9/12 se activan desde `/admin` sin cambios de código. El motor y sus tests cubren los cuatro desde el Brief 06.
 
@@ -242,7 +246,7 @@ Solo 3 meses queda habilitado al inicio; 6/9/12 se activan desde `/admin` sin ca
 
 **e) Snapshot.** Al enviarse la solicitud se congelan monto, plazo, tasa, ciclo, fecha de inicio, calendario de cuotas y total (`evaluaciones.snapshot`); los 4 documentos, LoanDisk y el estado de cuenta se generan desde ese snapshot, nunca recalculando.
 
-**Tests obligatorios (Brief 06):** los cuatro plazos con $100/$150/$200/$300 y tasas 4 %, 16 %, 24 %; inicio de descuento para solicitudes en los días 1, 9, 10, 14, 15, 24, 25, 29 y 30/31 con cada ciclo (el mismo día de pago no cuenta); 28-feb → 15-mar y 10-mar; meses de 28, 29, 30 y 31 días; afiliado con dos ciclos; caso SO-00077 exacto.
+**Tests obligatorios (Brief 06):** los cuatro plazos con $100/$150/$200/$300 y tasas 4 %, 16 %, 24 %; inicio de descuento para solicitudes en los días 1, 9, 10, 14, 15, 24, 25, 29 y 30/31 con cada ciclo (el mismo día de pago no cuenta); 28-feb → 15-mar y 10-mar; meses de 28, 29, 30 y 31 días; afiliado con dos ciclos; casos SO-00078 y SO-00079 exactos; última cuota con ajuste de centavos (5 × 28.67 + 28.65 = 172.00; $300 al 4 % a 9 meses: 17 × 22.67 + 22.61 = 408.00).
 
 ### 4.7 Back-office (`/admin`) — administrable sin tocar código
 

@@ -19,7 +19,7 @@
   --fic-texto:       #16213A;  /* texto principal */
 
   /* Tipografía */
-  --fic-font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fic-font-sans: var(--font-manrope, "Manrope"), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; /* --font-manrope la define next/font en Brief 02 */
   --fic-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --fic-text-xs:   0.75rem;
   --fic-text-sm:   0.875rem;

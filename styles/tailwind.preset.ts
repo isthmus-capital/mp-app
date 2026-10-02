@@ -8,6 +8,8 @@ import type { Config } from "tailwindcss";
  */
 const ficPreset: Partial<Config> = {
   theme: {
+    // Regla §15: una sola sombra. Se define fuera de extend para retirar shadow-md/lg/xl/2xl de Tailwind.
+    boxShadow: { none: "none", sm: "var(--fic-shadow-sm)" },
     extend: {
       colors: {
         fic: {
@@ -37,20 +39,19 @@ const ficPreset: Partial<Config> = {
         mono: ["var(--fic-font-mono)"],
       },
       fontSize: {
-        xs: "var(--fic-text-xs)",
-        sm: "var(--fic-text-sm)",
-        base: "var(--fic-text-base)",
-        lg: "var(--fic-text-lg)",
-        xl: "var(--fic-text-xl)",
-        "2xl": "var(--fic-text-2xl)",
-        "3xl": "var(--fic-text-3xl)",
+        xs: ["var(--fic-text-xs)", { lineHeight: "var(--fic-leading-normal)" }],
+        sm: ["var(--fic-text-sm)", { lineHeight: "var(--fic-leading-normal)" }],
+        base: ["var(--fic-text-base)", { lineHeight: "var(--fic-leading-normal)" }],
+        lg: ["var(--fic-text-lg)", { lineHeight: "var(--fic-leading-normal)" }],
+        xl: ["var(--fic-text-xl)", { lineHeight: "var(--fic-leading-tight)" }],
+        "2xl": ["var(--fic-text-2xl)", { lineHeight: "var(--fic-leading-tight)" }],
+        "3xl": ["var(--fic-text-3xl)", { lineHeight: "var(--fic-leading-tight)" }],
       },
       borderRadius: {
         sm: "var(--fic-radius-sm)",
         md: "var(--fic-radius-md)",
         lg: "var(--fic-radius-lg)",
       },
-      boxShadow: { sm: "var(--fic-shadow-sm)" },
       minHeight: { touch: "var(--fic-touch-min)" },
       minWidth: { touch: "var(--fic-touch-min)" },
     },

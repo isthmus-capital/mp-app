@@ -9,33 +9,174 @@
 
 | Sección | Estado | Fuente |
 |---|---|---|
-| 1. Workflows N8N | **Bloqueado** (la cadena v1 se documenta en 1-bis con lo validado por Gianclaudio el 02-oct-2026 y por CRM/Sign; el 03 KYC corregido se describe según esa validación) | El MCP de n8n pide re-autenticación (OAuth, no posible en sesión no interactiva). La lectura directa de la base de n8n fue denegada por el clasificador de permisos de Claude Code. Lo que figura abajo viene de §2, §8 y §18 del Prompt Maestro y debe confirmarse contra los nodos reales. |
-| 2. Payload BG | **Pendiente** (depende de 1) | Solo se documentan los campos CRM/Monday que lo alimentan. |
-| 3. IDs LoanDisk | Parcial | Producto y ciclos de §18; branch por afiliado y números de préstamo confirmados en CRM; `loan_disbursed_by_id` y `loan_payment_scheme_id` tal como viajan: pendiente de 1. |
-| 4. Tasa | Confirmado en CRM; tramo CRM→LoanDisk pendiente de 1 | COQL sobre SO-00077/78/79 y AF-0031/0033. |
+| 1. Workflows N8N | **Completo** (03, 04, 05 v2, 06 QA/prod, credenciales; subagentes de solo lectura tras la re-autenticación del conector, 02-oct-2026). El 03 publicado difiere del comportamiento descrito: ver 1.2 | El MCP de n8n pide re-autenticación (OAuth, no posible en sesión no interactiva). La lectura directa de la base de n8n fue denegada por el clasificador de permisos de Claude Code. Lo que figura abajo viene de §2, §8 y §18 del Prompt Maestro y debe confirmarse contra los nodos reales. |
+| 2. Payload BG | Completo | Sección 1.5: contrato de entrada del 06 y los 12 campos del body BG |
+| 3. IDs LoanDisk | Completo (calendario no visible) | Sección 1.4: payload loan/borrower tal como viaja en el 05 v2; el cronograma no queda en N8N |
+| 4. Tasa | Completo | CRM `Tasa_Nominal` → `Number().toFixed(4)` → `loan_interest` flat_rate Month (1.4) |
 | 5. Letra y redondeo | Completo | `tests/inventario/letra_v1.mjs` |
 | 6. Zoho CRM | Completo | `getFields` + reglas + registros reales |
 | 7. Deluge | Parcial | Reglas y comportamiento observado; código fuente pendiente (Gianclaudio pegará `mp_enviar_a_zoho_sign1`). |
 | 8. Zoho Sign | Completo | 4 templates leídos |
-| 9. Monday | Parcial | Tableros localizados; relación exacta con el 06 pendiente de 1. |
+| 9. Monday | Completo | El 06 prod no tiene nodos Monday: es un webhook compartido; Seguridad Unida lo llama desde `5wHL8Ut1ZT8SUZ2B` |
 | 10. Supabase | Completo | Proyecto `isthmus-mp` no existe |
 | 11. Accesos | Completo | Ver §11 |
 
-## 1. Workflows N8N (pendiente de confirmación con el MCP)
+## 1. Workflows N8N — inventario de nodos (02-oct-2026, solo lectura por MCP)
 
-| Workflow | ID | Función (según Prompt Maestro) | Qué falta capturar |
+**Método.** Conector n8n re-autenticado por Gianclaudio; tres subagentes de solo lectura con `search_workflows`, `get_workflow_details`, `list_credentials`, `search_workflow_executions` y `get_workflow_execution`. Nada se ejecutó, modificó ni publicó. Valores de headers, tokens y claves redactados; PII enmascarada. Lo que n8n no guarda (p. ej. el body exacto enviado por un nodo HTTP) se reconstruyó a partir de las expresiones y de los nodos previos, y se marca como "reconstruido".
+
+### 1.1 Resumen
+
+| Workflow | ID | Nombre real en N8N | Activo | activeVersionId | Actualizado (UTC) | Trigger |
+|---|---|---|---|---|---|---|
+| 03 KYC | `n4uerlMucRTnR8Bu` | "03 - MP KYC - Callback IDAnalyzer" | sí | `cb696e63-3091-4143-a034-388b718b9269` | 2026-10-01 16:16 | Webhook POST `/webhook/mp-kyc-callback`, sin autenticación (callback DocuPass) |
+| 04 Sign events | `HeXyYSjeUXu5qTBi` | "04 - ZOHO - Documentos Firmados" | sí | `99c57751-efb4-4a2b-b7a6-c10c72af1905` | 2026-09-30 22:52 | Webhook POST `/webhook/mp-sign-docs`, sin autenticación (Zoho Sign) |
+| 05 v2 LoanDisk + BG | `iPM3haUtdcof745M` | "05 v2 - MP Zoho → LoanDisk (BORRADOR)" | sí | `9899f185-c551-4c9a-8408-c95bc82a7fa5` | 2026-10-01 15:18 | Webhook POST `/webhook/mp-carta-firmada-v2`, **sin autenticación** |
+| 06 QA | `EQOqUBQp1N60zFlG` | "06 QA - BG Crear Transferencia (certificacion, sin dinero)" | sí | `ce250e87-e128-49aa-8ec9-cdd97684dc04` | 2026-10-01 15:12 | Webhook POST `/webhook/bg-crear-transferencia-qa`, sin autenticación |
+| 06 prod | `GTFFlEfXa0LOTtnF` | "06 - BG - Crear Transferencia" | sí | `ad844122-84fb-4c09-b2eb-c76c2ce2ed2c` | 2026-10-01 16:04 | Webhook POST `/webhook/bg-crear-transferencia`, **sin autenticación** |
+| "Flujo vigente" citado en el Brief 00 | `5wHL8Ut1ZT8SUZ2B` | "Monday → LoanDisk \| Aprobado" | sí | — | 2026-09-04 | Webhook de Monday (board 224465445). **No es el flujo MP**: es el flujo anterior Monday/Jotform (producto 365871, `interest_only` 16 % fijo, 24 cuotas, branch fijo 87572, llama al 06 prod sin condición de ambiente). Los IDs MP viven en el nodo "Config MP" del 05 v2. |
+| 07 polling | — | **No existe**: ningún nodo del 05 v2 ni de los 06 referencia un workflow de seguimiento. El estado final de la transferencia no se consulta. | | | | |
+
+Todos los workflows MP están en la carpeta `FbzPrZ0TGC7IFJxr`, sin tags. El 05 v2 se llama "(BORRADOR)" pero está activo y apunta a producción.
+
+### 1.2 03 KYC — Callback IDAnalyzer (`n4uerlMucRTnR8Bu`)
+
+**Identidad.** "03 - MP KYC - Callback IDAnalyzer", activo, versionId = activeVersionId `cb696e63-3091-4143-a034-388b718b9269` (borrador = publicado), **actualizado 2026-10-01 16:16:46 UTC** (11:16 Panamá). No hay ninguna versión publicada el 02-oct visible por la API. 19 nodos (uno deshabilitado), creado con el AI builder, sin errorWorkflow. **La versión publicada no tiene ejecuciones todavía**; las 21 ejecuciones existentes son anteriores (29561–29585 del 01-oct).
+
+**Trigger.** Webhook POST `/webhook/mp-kyc-callback`, responde de inmediato, **sin autenticación ni validación de firma**. Payload DocuPass en `body`: `decision`, `event`, `customData` (formato `cedula|telefono`), `docupass` (session), `transactionId`, `profileId`, `success`, `data`, `outputImage{front,back,face}` (tokens de filevault), `outputFile[]{name,fileName,fileUrl}` (3 PDF: Transaction Audit Report, Face Audit Report, Docupass Audit Report, en `api2-us2.idanalyzer.com/filevault/…`, descargables **sin autenticación**).
+
+**Nodos.** "Extraer Campos" (Set: decision, cédula y teléfono desde `customData`, docupass, event, imágenes; `transaction_id = body.id` — **campo equivocado**, el payload trae `transactionId`, por lo que queda `null`) → "decision == accept?" (`decision == accept` AND `event == docupass_conclusive`) → rama aprobado: "Preparar Mensaje Aprobado" (Set; su texto apunta a microprestamos.isthmuscap.com y **ningún nodo lo usa**) → en paralelo (a) "HTTP -WhatsApp - Enviar Formulario" (POST `graph.facebook.com/v19.0/<phone_number_id>/messages`, `type: text` con enlace **http**://solicitudmp.isthmuscap.com/; `onError: continueRegularOutput`; **token de Meta escrito en el nodo**, sin credencial) y (b) "HTTP - Buscar Solicitud CRM" (GET `/crm/v7/Solicitudes_Microprestamo/search?criteria=(C_dula_ID:equals:<cedula>)&fields=id,Folder_ID_KYC`, **neverError: true**, credencial `V8ToVmg60xSjZasl`) → "IF - Solicitud Encontrada" → "HTTP - Actualizar Session ID CRM" (PUT crm/v2: `IDAnalyzer_Session_ID`, `IDAnalyzer_Transaction_ID`) → "Edit Fields" / "Split - outputFile" → "HTTP - Descargar PDF IDAnalyzer" → "HTTP - Subir PDF WorkDrive KYC" (upload a `Folder_ID_KYC`, nombre original `…-audit-report_<rand>.pdf`, sin SO ni cédula, credencial `lRBD9utZoqJjYHEW`) → "Aggregate". Espera: "IF - Seguir Esperando" (`$runIndex < 15`) → "Wait 2 min" → vuelve a "Buscar Solicitud CRM"; "Aviso - KYC sin Solicitud" (Gmail `l3e9P4UxBqKXKir4`, a g\*\*\*@isthmuscap.com ×2, asunto "MP - KYC aprobado sin solicitud: <cedula>", cuerpo con cédula, **teléfono**, sesión y enlace a la ejecución). Rama rechazado: "Preparar Mensaje Rechazado" → "WhatsApp - Enviar Rechazo [PENDIENTE]" (marcador; **no envía nada**).
+
+**Comportamiento previsto (Gianclaudio, 02-oct-2026) vs. lo que muestran los nodos publicados (subagente, lectura del JSON de conexiones):**
+
+| Previsto | Según los nodos publicados | Estado |
+|---|---|---|
+| WhatsApp con el enlace **de inmediato** al aprobar, sin depender de la solicitud; si falla no frena el resto | No depende de la solicitud y no frena (`continueRegularOutput`) ✅, pero con `executionOrder v1` el nodo se ejecuta **al final** de la rama de búsqueda (en 29585 fue el último nodo, índice 11); con el bucle de espera puede salir hasta 30 min después | **Parcialmente refutado** |
+| Busca por cédula; si no existe, reintenta cada 2 min hasta 15 veces | Los nodos existen, pero la salida **false** de "IF - Solicitud Encontrada" **no está conectada**: si no la encuentra, la ejecución termina en silencio. El bucle corre cuando **sí** la encuentra | **Refutado tal como está cableado** |
+| A los 30 min sin solicitud, correo desde gestionprestamos@ a Gisela y Gianclaudio | "Aviso - KYC sin Solicitud" cuelga de la **misma salida true** que "Wait 2 min": sale en cada vuelta con solicitud encontrada (falsa alarma, hasta 16 correos) y nunca sin ella | **Refutado** |
+| Si la encuentra: `IDAnalyzer_Session_ID` en CRM y 3 reportes al folder KYC | Confirmado ✅, con dos defectos: `IDAnalyzer_Transaction_ID` queda `null` (`body.id` vs `transactionId`) y, por el bucle, CRM se reescribe y los 3 PDF se vuelven a subir en cada vuelta (hasta 16×3 archivos, sin `override-name-exist`) | **Confirmado con defectos** |
+
+Esta lectura es del JSON de conexiones (`IF - Solicitud Encontrada.main[0]` → Actualizar Session ID **y** IF - Seguir Esperando; `main[1]` inexistente; `IF - Seguir Esperando.main[0]` → Wait 2 min **y** Aviso). **Pendiente urgente (Gianclaudio): verificar en el canvas y corregir antes del próximo KYC real**; si la lectura es correcta, la versión publicada no cumple lo descrito. Lección confirmada: el Retry de N8N (29583/29584) reutilizó la salida guardada y volvió a fallar; para reprocesar hay que re-ejecutar con el payload original.
+
+**Otros puntos.** Las ejecuciones con error del 01-oct (29562, 29584) fallaron en la subida a WorkDrive (400 F6003 "Invalid Param": `parent_id` con `.item`; la versión actual usa `.last()`). `redaction.production = false`: las ejecuciones guardan cédula, teléfono, email y los tokens de filevault de IDAnalyzer. El `profileId` llega en el payload y no está escrito en el 03 (vive en el 02, no revisado).
+
+### 1.3 04 — Documentos firmados (`HeXyYSjeUXu5qTBi`)
+
+**Identidad.** "04 - ZOHO - Documentos Firmados", activo, activeVersionId `99c57751-efb4-4a2b-b7a6-c10c72af1905`, actualizado 2026-09-30 22:52 UTC, 19 nodos, `callerPolicy: workflowsFromSameOwner`, sin errorWorkflow. 17 ejecuciones (29569–29572 el 01-oct para SO-00079).
+
+**Trigger.** Webhook POST `/webhook/mp-sign-docs` (Zoho Sign → N8N), sin autenticación. Payload: `body.requests{request_id, request_name, request_status, document_ids[], actions[{action_type, recipient_name, recipient_email, signing_order, action_status}], …}` y `body.notifications{operation_type, activity, performed_at, ip_address}`. `request_name` observado: "MP - <nombre> - SO -00079 - Documentos del préstamo".
+
+**Lógica.** "IF - Ignorar duplicado" descarta `operation_type = RequestSigningSuccess` con `request_status = completed` (evita el doble evento). "Verificar si esta firmado" (`completed`) → "If2 - verificar doc tipo MP" (`request_name contains "MP -"`) → **rama COMPLETED**: "WD - Refrescar token" (GET `/workdrive/api/v1/users/me`, **neverError: true**, `lRBD9utZoqJjYHEW`) → "HTTP - Buscar Registro CRM" (search por `Sign_Request_ID_Contrato OR _Pagare OR _Carta OR _APC = request_id`; con el sobre único los 4 coinciden) → "HTTP - Detalle Sign" (`sign.zoho.com/api/v1/requests/{id}`) → "Split - Documentos" (un item por `document_ids`; error si vacío) → "HTTP - Descargar PDF" (`/requests/{rid}/documents/{doc}/pdf`) → "HTTP - WD - Subir PDF" (`workdrive.zoho.com/api/v1/upload`, header `override-name-exist`, nombre **`<document_name> - <ID_Solicitante>.pdf`**, p. ej. "MP - Contrato de Préstamo - SO -00079.pdf", carpeta `Folder_ID_Documentos_Firmados`) → "Aggregate" → "HTTP - Descargar Certificate" (`/completioncertificate`) → "HTTP - WD - Subir Certificate" (**"MP - Certificado de firmas - <SO>.pdf"**, misma carpeta) → "HTTP - Actualizar Status COMPLETED" (PATCH: para cada documento cuyo `Sign_Request_ID_<Doc>` coincide, `Sign_Status_<Doc> = COMPLETED` y `Sign_Detalle_<Doc> = "Nombre: ✓ | …"`) → "HTTP - Descargar Carta" (documento cuyo nombre coincide con `/carta/i`) → "HTTP - WD - Subir a RRHH" (**"MP - Carta de Descuento Directo - <SO>.pdf"** a `Folder_ID_RRHH`) → **"Webhook - LoanDisk"**: POST a `automation.isthmuscap.com/webhook/mp-carta-firmada-v2` (el 05 v2) con `crm_id, solicitante, cedula, nombre_completo, email, id_solicitante, monto, loandisk_branch_id`, sin autenticación. **Rama IN PROGRESS** (no completado, o completado sin "MP -"): "HTTP - Buscar CRM InProgress" → "HTTP - Actualizar Status IN PROGRESS" (`Sign_Status_<Doc> = IN PROGRESS`, salvo Pagaré y APC que pasan a COMPLETED cuando el firmante de orden 1 ya firmó; también `Sign_Detalle_<Doc>`).
+
+**Qué escribe y qué no.** Escribe solo `Sign_Status_*` y `Sign_Detalle_*`. **No escribe `Estado_Solicitud`** (queda "Pendiente Firma" hasta que el 05 v2 pone "Pendiente Desembolso") **ni `WorkDrive_Docs_Firmados_URL`** (ya existía). Lee `ID_Solicitante`, `Folder_ID_Documentos_Firmados`, `Folder_ID_RRHH`, `C_dula_ID`, `Nombre_Completo`, `Email1`, `Monto_Solicitado`, `LoanDisk_Branch_ID`. **Dispara el 05 v2 directamente por HTTP**, no por cambio de estado en CRM, siempre que se completa un sobre "MP -", sin comprobar que los 4 `Sign_Status_*` queden en COMPLETED (lo valida el 05 v2). No envía correos ni WhatsApp.
+
+**Errores.** Sin continueOnFail, reintentos ni error workflow. Un sobre completado cuyo nombre no empiece por "MP -" cae en la rama IN PROGRESS y el PATCH fallaría con `data[0].id` indefinido. Credenciales: WorkDrive y Sign con `lRBD9utZoqJjYHEW` (como esperaba §2); CRM con `V8ToVmg60xSjZasl` (+ `lRBD` residual).
+
+### 1.4 05 v2 — Zoho → LoanDisk → BG (`iPM3haUtdcof745M`)
+
+**Trigger y entrada.** Webhook `mp-carta-firmada-v2` (POST, `responseMode: onReceived`, sin autenticación), llamado desde otro workflow de N8N (user-agent n8n, IP interna vía Caddy; el llamador exacto no es visible: presumiblemente el 04 al completarse las firmas). Llegan en `body`: `crm_id, solicitante, cedula, nombre_completo, email, id_solicitante, monto, loandisk_branch_id` (en una ejecución anterior también `empresa, fecha_firma_rrhh, fecha_primer_pago, telefono, banco_beneficiario, cuenta_beneficiario, tipo_cuenta`). **Solo usa `body.crm_id`**; todo lo demás lo relee del CRM (`GET /crm/v7/Solicitudes_Microprestamo/{crm_id}`, credencial `V8ToVmg60xSjZasl`).
+
+**Nodos (21, en orden).** Trigger → "Config MP (editar aqui)" (Code, constantes) → "CRM - Leer Solicitud" → "Validar Solicitud" (Code) → IF válida → "LoanDisk - Buscar Prestamo Existente" (GET `loan/loan_application_id/{ID_Solicitante}`) → IF no existe → "LoanDisk - Crear Borrower" (POST `borrower`) → IF creado / "LoanDisk - Buscar Borrower por Cedula" (GET `borrower/borrower_unique_number/{cedula}`) → "Resolver Borrower ID" → "LoanDisk - Crear Prestamo" (POST `loan`) → IF creado → "CRM - Guardar Prestamo" (PATCH `Prestamo_No`, `Estado_Solicitud = Pendiente Desembolso`) → IF `llamar_bg` → "BG - Crear Transferencia (06)" (POST al webhook del 06) / "BG Simulado" → fin. Ramas de error → "Motivo - Prestamo No Creado" / "Armar Aviso" → "Enviar Aviso" (Gmail `l3e9P4UxBqKXKir4`, solo en fallo, a g\*\*\*@isthmuscap.com ×2, asunto "MP - Prestamo NO procesado: {nombre} ({SO})").
+
+**Validaciones de "Validar Solicitud" (lo que la app debe replicar en el motor de reglas).** Obligatorios: `id`, `LoanDisk_Branch_ID` numérico, `C_dula_ID`, `Nombre_Completo`, `Fecha_Inicio_Descuento`, `Banco_Desembolso`, `Numero_de_Cuenta`, `Tipo_de_Cuenta`, `ID_Solicitante`. `Monto_Solicitado ∈ {100,150,200,300}` (solo si viene). `Tasa_Nominal > 0`. `Cuotas = 6` (fijo). Idempotencia: `Prestamo_No` y `Referencia_de_Transferencia` vacíos. Las 4 `Sign_Status_* = COMPLETED` (no filtra por `Estado_Solicitud`). Nombre partido en primera palabra / resto. Teléfono sin `+507` ni no-dígitos. `fecha_primer_pago = Fecha_Inicio_Descuento` en `dd/mm/yyyy`. **Ciclo por el día de `Fecha_Inicio_Descuento`:** 10 o 25 → esquema 4646; 15, 28, 29, 30 o 31 → esquema 4418; cualquier otro día → error "no cae en quincena de planilla" y correo.
+
+**Payload LoanDisk — borrower** (`POST https://api-main.loandisk.com/75055/{branch}/borrower`, form): `borrower_unique_number` ← `C_dula_ID`; `borrower_firstname`, `borrower_lastname`; `borrower_mobile` ← `Tel_fono` sin 507; `borrower_email` ← `Email1`; `borrower_business_name` ← `Lugar_de_Trabajo`; custom fields `custom_field_27898` (Bank Account ← `Numero_de_Cuenta`), `custom_field_27899` (Bank ← `Banco_Desembolso`), `custom_field_27951` (Identificación ← cédula), `custom_field_28102` (Account Type ← `Tipo_de_Cuenta`). No envía fecha de nacimiento, género, dirección ni salario.
+
+**Payload LoanDisk — loan** (`POST /75055/{branch}/loan`):
+
+| Campo | Valor / expresión | Origen |
+|---|---|---|
+| `borrower_id` | del create o de la búsqueda por cédula | LoanDisk |
+| `loan_status` | `Open` | constante |
+| `loan_application_id` | `ID_Solicitante` tal cual (**"SO -00078", con espacio**) | CRM |
+| `loan_product_id` | **383523** ("Micropago Flat 1025") | Config MP |
+| `loan_disbursed_by_id` | **285809** (ACH) | Config MP |
+| `loan_principal_amount` | `Monto_Solicitado` | CRM |
+| `loan_released_date` | fecha de ejecución (`$now` America/Panama, dd/MM/yyyy) | N8N |
+| `loan_interest_method` | `flat_rate` | Config MP |
+| `loan_interest_type` | `percentage` | constante |
+| `loan_interest_period` | `Month` | Config MP |
+| `loan_interest` | `Number(Tasa_Nominal).toFixed(4)` → "24.0000" | CRM |
+| `loan_duration_period` / `loan_duration` | `Months` / **3** | Config MP |
+| `loan_payment_scheme_id` | **4646** (10-25) o **4418** (15-30) según el día de inicio | Config MP + regla |
+| `loan_num_of_repayments` | **6** | Config MP |
+| `loan_decimal_places` | `round_off_to_two_decimal` | constante |
+| `loan_first_repayment_date` | `Fecha_Inicio_Descuento` dd/mm/yyyy | CRM |
+| `description` | `Lugar_de_Trabajo` | CRM |
+| fees / FECI / custom fields del loan | **ninguno** | — |
+
+Otras constantes de "Config MP": `montos_validos = [100,150,200,300]`, `llamar_bg: true`, **`bg_ambiente: 'prod'`** (comentario: "PRODUCCION desde 1-oct-2026 (prueba con Antonio, autorizada por Gianclaudio)"; el comentario del propio campo dice "DINERO REAL, pendiente de aprobacion de Diego"), `bg_url_prod = https://automation.isthmuscap.com/webhook/bg-crear-transferencia`, `bg_url_qa = …/bg-crear-transferencia-qa`. La descripción del workflow está desactualizada (dice producto 383112 y BG desactivado).
+
+**Llamada al 06.** HTTP POST (no Execute Workflow) a `bg_ambiente === 'prod' ? bg_url_prod : bg_url_qa`, `neverError: true`, con `crm_id, monto, nombre_beneficiario` (← `Titular_Cuenta_Completo` o el nombre), `id_solicitante, cuenta_beneficiario, banco_beneficiario, tipo_cuenta, email_beneficiario`. **Después del POST no hay ningún paso**: no valida la respuesta ni escribe nada en CRM; `Referencia_de_Transferencia` la escribe el 06.
+
+**Manejo de errores.** `neverError: true` en las 5 llamadas externas (4 LoanDisk + BG), sin reintentos ni errorWorkflow. "Buscar Prestamo Existente" trata cualquier respuesta sin `loan_id` (404, error de auth, caída) como "no existe" → idempotencia débil. "Resolver Borrower ID" hace `throw` sin correo. "CRM - Guardar Prestamo" sin neverError: si falla, el préstamo queda creado en LoanDisk sin `Prestamo_No` en CRM. Solo hay correo de aviso en fallo; ninguno de éxito ni al cliente.
+
+**Ejecuciones guardadas (solo 5):**
+
+| id | Estado | Inicio (UTC) | Modo | Resultado |
+|---|---|---|---|---|
+| 29293 | success | 2026-09-30 20:55 | webhook | SO-00078: creó el préstamo **11909205**; BG simulado |
+| 29328 | success | 2026-09-30 22:52 | webhook | SO-00078: rechazado "Ya tiene prestamo (11909205)"; correo |
+| 29375 | success | 2026-10-01 02:22 | **manual** (trigger fijado) | SO-00078: creó **11909610**; BG simulado (`llamar_bg: false`) |
+| 29573 | success | 2026-10-01 15:58 | webhook | SO-00079: rechazado "Ya existe el prestamo **11909301** en LoanDisk para SO -00079"; correo |
+| 29580 | success | 2026-10-01 16:03 | **manual** (trigger fijado) | SO-00079: creó **11913796**; **BG prod llamado** |
+
+**Préstamo 11909610 (SO-00078, ejecución 29375; request reconstruido).** borrower_id 8083050 (el create devolvió "Unique Number is not unique"; la búsqueda por cédula devolvió **2 borrowers** y se tomó el primero); `loan_application_id "SO -00078"`, producto 383523, disbursed_by 285809, principal 100, released 30/09/2026, flat_rate 24.0000 % Month, 3 Months, esquema 4646, 6 cuotas, first_repayment 10/10/2026. Respuesta: `{"loan_id":"11909610"}`, HTTP 200, **sin estado ni calendario**. CRM: `Prestamo_No = 11909610`, `Pendiente Desembolso`.
+**Préstamo 11913796 (SO-00079, ejecución 29580).** borrower_id 8084875 (creado), principal **300**, released 01/10/2026, mismos parámetros, esquema 4646, first_repayment 10/10/2026. Respuesta `{"loan_id":"11913796"}`, sin calendario. CRM actualizado. BG prod llamado con monto 300, Banco Nacional, Ahorros (ver 1.5).
+**Calendario de cuotas:** LoanDisk solo devuelve `loan_id`; ningún nodo consulta el cronograma, por lo que **no está en ninguna ejecución**. Las cuotas 28.67 / 86.00 que figuran en CRM son `Letra_Mensual`, calculadas antes, no leídas de LoanDisk. Pendiente Brief 06: leer el cronograma por API (solo lectura) y fijarlo como fixture.
+
+### 1.5 06 QA (`EQOqUBQp1N60zFlG`) y 06 prod (`GTFFlEfXa0LOTtnF`)
+
+**Contrato de entrada (ambos, `body.*`):** `crm_id`, `monto`, `nombre_beneficiario`, `cuenta_beneficiario`, `banco_beneficiario` (texto exacto: "Banco General", "BAC", "Banistmo", "Caja de Ahorros", "Banco Nacional", "Global Bank"; otro valor → error), `tipo_cuenta` ("Cuenta de Ahorros", "Cuenta Corriente", "Ahorros", "Corriente"; si falta → 4 = ahorros), `id_solicitante`, `email_beneficiario` (**se ignora**: el correo va fijo a z\*\*\*@isthmuscap.com). No hay nodo ni trigger de Monday: el 06 prod es un webhook genérico que **comparten** Seguridad Unida (desde `5wHL8Ut1ZT8SUZ2B`) y el flujo MP; nada distingue el origen y la descripción "DESEMBOLSO MP <id_solicitante>" es fija para cualquier llamador.
+
+**Nodos (orden).** Webhook → "BG - Autenticar" (GET `/autenticacion/autenticar`, devuelve `Token`) → "Guardar Token" → "Limpiar Campos" (Code: mapea banco → código BG **71** Banco General, **1384** BAC, **26** Banistmo, **770** Caja de Ahorros, **13** Banco Nacional, **1151** Global Bank; tipo de cuenta → **4** ahorros / **3** corriente; normaliza el nombre sin acentos ni ñ en MAYÚSCULAS; descripción "DESEMBOLSO MP <id>") → "BG - POST Desembolso" (POST `/h2h/transaccion/individuales`) → "Guardar Codigo Pago" → PATCH CRM `Referencia_de_Transferencia` → correo.
+
+**Payload BG** (`POST https://conexionbg.bgeneral.cloud/h2h/transaccion/individuales` en prod; QA en `api-iqy.us-east-a.apiconnect.ibmappdomain.cloud/bg-stage-0/bg-h2h-qa2/...`), body `{ "transacciones": [ { … } ] }`:
+
+| Campo | Valor / expresión | Notas |
+|---|---|---|
+| `descripcion` | "DESEMBOLSO MP <id_solicitante>" | mayúsculas, sin acentos |
+| `monto` | `monto` | QA lo convierte con `Number()`; prod lo pasa tal cual |
+| `fechaInicial` | `$now.toISO()` | sin programación |
+| `trnPropia` | `false` | constante |
+| `codigoProducto` | `3` | producto de la cuenta origen |
+| `cuentaOrigen` | **`0301000001265`** (prod) / `0301011367700` (QA) | constante |
+| `correo` | fijo z\*\*\*@isthmuscap.com | ignora `email_beneficiario` |
+| `nombreBeneficiario` | nombre normalizado | |
+| `codigoBanco` | tabla de "Limpiar Campos" | |
+| `codigoProductoBeneficiario` | 4 ahorros / 3 corriente | |
+| `numeroCuentaBeneficiario` | `cuenta_beneficiario` | string |
+| `secuencial` | `1` | constante |
+
+Sin campo de moneda ni flag de ambiente: el ambiente lo define solo la URL de cada nodo. Autenticación: client-id y client-secret de BG van **en texto plano dentro de los nodos HTTP** (prod y QA; prod además en dos nodos QA deshabilitados), no en credenciales de N8N; el `Token` devuelto va en la cabecera de autorización del POST.
+
+**Respuesta BG** (vista en ejecuciones): `status.returnStatus.returnCode` (`U0000` = OK), `body.resultadosTransaccion[0].{secuencial, estadoTransaccion ("PA" = pendiente de aprobación), codigoPago}`. **Write-back:** solo `Referencia_de_Transferencia` en `Solicitudes_Microprestamo` (`QA-<codigo>` en QA; el código sin prefijo en prod). No escribe `Aprobaciones_BG` ni `Estado_Solicitud`, ni Monday. **Correo:** prod a d\*\*\*@ y g\*\*\*@isthmuscap.com, asunto "⏳ Transferencia Pendiente de Aprobación - {nombre}", HTML con cuenta destino completa y código, pide aprobar en Banca en Línea; QA a g\*\*\*@ ×2 con asunto "[PRUEBA QA] …". Credenciales: CRM `V8ToVmg60xSjZasl`, Gmail `l3e9P4UxBqKXKir4`.
+
+**Diferencias prod vs QA (no son idénticos salvo ambiente):** QA arma el body con `JSON.stringify`, prod con una plantilla de texto (frágil ante comillas en el nombre o un monto con "="); QA tiene `neverError` + `fullResponse` en el POST y un Code que **lanza error si no hay `codigoPago`**; prod no valida el código (deja `null` y sigue), el PATCH a CRM tiene `onError: continueRegularOutput` (fallo ignorado) y conserva dos nodos QA deshabilitados ("BG - Autenticar1", "BG - POST Desembolso") y una credencial residual `lRBD9utZoqJjYHEW`. QA limpia la entrada (`clean()`, `Number`); prod no.
+
+**Ejecuciones.** 06 QA: 29534 (error, 2026-10-01 14:59) y 29536 (success, 15:00, manual con pinData; entrada SO-00078 monto 100 BAC; respuesta `U0000`, `PA`, **codigoPago 12317**; CRM "record updated"). 06 prod: 29256 (error, 2026-09-30 18:46) y **29581 (success, 2026-10-01 16:03 UTC = 11:03 Panamá, modo webhook, llamada interna desde el 05 v2 ejecución 29580)**: entrada SO-00079, monto 300, Banco Nacional, Ahorros; respuesta `U0000`, `PA`, **codigoPago 18524**. Anomalía: "Guardar Codigo Pago" corrió dos veces; la segunda vino del nodo deshabilitado "BG - POST Desembolso" con código `null` (un nodo deshabilitado deja pasar los datos). **Verificado en CRM el 02-oct-2026:** SO-00079 conserva `Referencia_de_Transferencia = 18524` (no fue pisado por "null"); `Aprobaciones_BG` sigue vacío (ningún workflow lo escribe). El 06 prod se editó a las 16:04:30 UTC y esa conexión ya no existe.
+
+### 1.6 Credenciales de N8N (`list_credentials`: 14, proyecto personal de Gianclaudio)
+
+| id | Nombre | Tipo | Uso MP |
 |---|---|---|---|
-| 04 — guardar documentos firmados | `HeXyYSjeUXu5qTBi` | Webhook de Sign → descarga los 4 PDF por separado con nombre y certificado → WorkDrive; la Carta va también a RRHH (§18) | Nodos, credencial Zoho (debe ser `lRBD9utZoqJjYHEW` por usar WorkDrive), naming de archivos, campos CRM que escribe (`Sign_Status_*`, `Sign_Detalle_*`, `WorkDrive_Docs_Firmados_URL`) |
-| 05 v2 — LoanDisk + decisión de ambiente BG | `iPM3haUtdcof745M` | Crea borrower + loan en LoanDisk; decide con `bg_ambiente = 'qa' \| 'prod'` a qué 06 llamar (§18) | **Payload LoanDisk completo**: `loan_product_id`, `loan_disbursed_by_id`, `loan_payment_scheme_id`, `loan_interest`, `loan_duration`, `loan_duration_period`, fees; expresión que lee la tasa; dónde vive `bg_ambiente`; nodo que escribe `Prestamo_No` en CRM |
-| 06 prod — BG H2H producción | `GTFFlEfXa0LOTtnF` | Genera la transferencia pendiente en Banca en Línea que Diego aprueba o rechaza. **No se modifica ni se ejecuta.** | Trigger (Monday / webhook), **estructura del payload de transferencia**, credencial BG, cuenta origen, cómo devuelve `codigoPago` |
-| 06 QA — BG H2H certificación | `EQOqUBQp1N60zFlG` | Ambiente `bg-h2h-qa2`, cuenta de certificación 0301011367700; probado OK con `codigoPago 12317` (§18) | Diferencias con el 06 prod (solo URL/cuenta/credencial, o también nodos) |
-| Flujo vigente LoanDisk (Brief 00) | `5wHL8Ut1ZT8SUZ2B` | Referencia del Brief 00 para los IDs de LoanDisk | Confirmar si es el flujo Monday original del que el 05 v2 tomó los IDs |
-| 07 — polling BG | ID desconocido | Estado de transferencias cada 10 min (§4.7, §8) | ID, nodos, campos CRM que actualiza (`Referencia_de_Transferencia`, `Aprobaciones_BG`) |
-| `mp_sign_guardar_docs`, `mp-carta-firmada` | IDs desconocidos | Nombres citados en §8 como los que `mp_sign_events` reemplaza | Confirmar si son el 04 o workflows aparte |
+| `V8ToVmg60xSjZasl` | Zoho account | zohoOAuth2Api | CRM en 05 v2 y 06 (sin WorkDrive) ✅ |
+| `lRBD9utZoqJjYHEW` | Zoho Sign WorkDrive OAuth2 | oAuth2Api | WorkDrive y Sign (04) ✅; aparece residual en 05 v2 y 06 prod |
+| `l3e9P4UxBqKXKir4` | Gmail account 2 | gmailOAuth2 | Correos MP (gestionprestamos@ según §18; el nombre de la credencial no lo confirma) ✅ |
+| `YE6pWD9tPDLeC7rJ` | Gmail Facturasfic | gmailOAuth2 | **No usar** para MP (§18) |
+| `7sugiv81vzswd6ra` | Gmail account | gmailOAuth2 | otro |
+| `qGu8n7birqwFQ1lL` | SMTP account | smtp | otro |
+| `wKnZCYtytaI06wP1` / `4auQ3tA79ga9ziUt` | Header Auth account / account 2 | httpHeaderAuth | uso no visible (¿LoanDisk?) |
+| `UgCleHysvKlI78RI` | Sectigo Intermediate CA | httpSslAuth | no usado por los 06 |
+| `uLjh3KP3G57cmbgp` / `98Vksw5NyJlbOkLs` | Monday.com account / monday.com account | mondayComApi / mondayComMcpOAuth2Api | flujo Monday |
+| `LNdCU5gaYsIpU8na`, `Mn4MTtWDkFmqBlnp` | Google Drive / Sheets | | otro |
+| `eabRh5flaGNB5wrf` | Anthropic account | anthropicApi | otro |
 
-Credenciales N8N citadas en el Prompt Maestro (pendiente confirmar con `list_credentials`): Zoho `V8ToVmg60xSjZasl` (sin WorkDrive), Zoho `lRBD9utZoqJjYHEW` (con WorkDrive, *Token Expired Status Code = 500*), Gmail `l3e9P4UxBqKXKir4` (gestionprestamos@isthmuscap.com), `Meta WhatsApp MP` (existencia sin confirmar).
+**No existen** credenciales para: **Meta WhatsApp MP** (pendiente de crear; §14), **Banco General** (claves en texto plano en los nodos), **LoanDisk** (Basic en texto plano en 4 nodos del 05 v2 y 3 del 5wHL8), **IDAnalyzer** (ver 1.2).
 
-**Checklist para completar esta sección** (cuando el conector n8n esté re-autenticado): `search_workflows` → `get_workflow_details` de los 5 IDs + 07 → `list_credentials` → `search_workflow_executions` del 05 v2 (status success, últimas 3) → `get_workflow_execution` de una con `includeData` solo para los nodos LoanDisk y BG. Copiar estructura, nunca headers ni valores de credenciales; enmascarar PII.
+### 1.7 Anomalías detectadas en los nodos (resumen; detalle y controles en `docs/RIESGOS.md` R23–R33)
+
+Secretos en texto plano (BG prod/QA, LoanDisk Basic, JWT de Monday en 5wHL8, token de Meta WhatsApp en el 03); webhooks sin autenticación (`bg-crear-transferencia` prod, `mp-carta-firmada-v2`, `mp-kyc-callback`, `mp-sign-docs`); cableado roto de los dos IF del 03 (bucle con solicitud encontrada, nada sin ella; WhatsApp al final; hasta 16 correos falsos); `IDAnalyzer_Transaction_ID` siempre null; WhatsApp como texto libre (fuera de la ventana de 24 h falla en silencio) con enlace http; rama de rechazo KYC sin envío; redacción de datos desactivada (PII y tokens de filevault en el historial); `bg_ambiente = 'prod'` y `llamar_bg = true` escritos en un Code node de un workflow llamado "(BORRADOR)"; los dos préstamos reales salieron de ejecuciones manuales con el trigger fijado; SO-00078 tiene dos préstamos creados (11909205 y 11909610) y SO-00079 tuvo un préstamo previo 11909301 con número SO; una cédula con dos borrowers en LoanDisk; `neverError: true` en todas las llamadas externas; idempotencia débil; valores financieros fijos en código; token de sesión de BG guardado en el historial de ejecución QA; prod no valida `codigoPago` e ignora el fallo del PATCH a CRM; nodos deshabilitados que dejan pasar datos; sin 07 ni polling; `email_beneficiario` ignorado; sin moneda en el payload BG.
 
 ## 1-bis. Cadena v1 end-to-end — línea base funcional
 
@@ -59,12 +200,13 @@ Leyenda: ✅ confirmado en CRM/Sign/registros · 📄 según Prompt Maestro §18
 
 | | Detalle |
 |---|---|
-| Workflow | "03" (ID ⏳). Profile IDAnalyzer `53067a87b10a41bd8771c34e9b7c53c4` 📄 §2. Versión corregida publicada por Gianclaudio el 02-oct-2026, manualmente en N8N y fuera de esta sesión (desde esta sesión no se publicó ni modificó ningún workflow); **aún no validada en vivo**: la valida el próximo KYC real. |
+| Workflow | "03 - MP KYC - Callback IDAnalyzer" `n4uerlMucRTnR8Bu` ✅ (1.2). Profile IDAnalyzer `53067a87b10a41bd8771c34e9b7c53c4` 📄 §2 (llega en el payload; se configura en el 02). Versión corregida publicada por Gianclaudio manualmente en N8N y fuera de esta sesión (última publicación visible por la API: 01-oct-2026 16:16 UTC; desde esta sesión no se publicó ni modificó ningún workflow); **sin ejecuciones aún**: la valida el próximo KYC real. |
 | Entradas | Callback de IDAnalyzer con el resultado de la verificación (cédula, sesión, estado aprobado/rechazado). Llega normalmente **antes** de que exista la solicitud. |
 | Comportamiento (v1 corregida) | 1. Al **aprobar** IDAnalyzer, el **WhatsApp con el enlace del formulario sale de inmediato**, sin depender de encontrar la solicitud (antes dependía de ella y casi nunca salía). Si el WhatsApp falla, **no frena** lo demás. 2. En paralelo busca la solicitud por cédula; si no existe, **reintenta cada 2 min hasta 15 veces (30 min)**. 3. Sin solicitud a los 30 min → correo desde **gestionprestamos@** a Gisela y a Gianclaudio con la cédula y el enlace de la ejecución, para reprocesarla. 4. Si la encuentra: guarda `IDAnalyzer_Session_ID` en CRM ✅ (presente en SO-00078/79) y sube **3 reportes** (Transaction, Face, Docupass Audit) al folder KYC (`Folder_ID_KYC`). |
 | Validaciones | Resultado/score de DocuPass; selfie con instrucción visual 📄 §4.1. |
 | Salidas | WhatsApp al solicitante; `IDAnalyzer_Session_ID` (+ `IDAnalyzer_Transaction_ID`) en CRM; 3 PDF en `Folder_ID_KYC`; correo de excepción a operaciones si no hay solicitud. |
-| Lección N8N | El **Retry** de N8N reutiliza la salida guardada del nodo anterior; para reprocesar hay que **re-ejecutar el workflow completo con el payload original**. Para la app: `webhook_inbox` conserva el payload original de cada callback y el reproceso siempre parte de él. |
+| Lección N8N | El **Retry** de N8N reutiliza la salida guardada del nodo anterior; para reprocesar hay que **re-ejecutar el workflow completo con el payload original** (confirmado en 29583/29584). Para la app: `webhook_inbox` conserva el payload original de cada callback y el reproceso siempre parte de él. |
+| **Contraste con los nodos (02-oct-2026)** | La lectura por MCP de la versión publicada (1.2) **no coincide** con el comportamiento previsto: salidas false de los dos IF sin conectar (sin reintento ni correo cuando no hay solicitud; bucle y correos falsos cuando sí la hay), WhatsApp al final de la rama y como texto libre, `IDAnalyzer_Transaction_ID` null, token de Meta en el nodo. Verificar en el canvas y corregir **antes del próximo KYC real**. |
 | Regla para la app | El **OTP/enlace por WhatsApp no puede depender de que exista la solicitud**, y `mp_kyc_callback` debe tolerar el orden KYC → solicitud (asociación posterior por cédula/sesión con reintentos y alerta a operaciones), igual que la v1 corregida. |
 
 ### Paso 2 — Revisión y envío a firma (CRM + Deluge)
@@ -82,8 +224,8 @@ Leyenda: ✅ confirmado en CRM/Sign/registros · 📄 según Prompt Maestro §18
 | | Detalle |
 |---|---|
 | Entradas | Webhook de Zoho Sign por evento del sobre (firmado parcial, completado, recalled). |
-| Validaciones | ⏳ (idempotencia por `request_id` + evento; credencial Zoho con WorkDrive `lRBD9utZoqJjYHEW`, *Token Expired Status Code = 500* 📄). |
-| Salidas | `Sign_Status_*` y `Sign_Detalle_*` por documento ✅ (`COMPLETED` ×4; `RECALLED` en SO-00077 cancelada). Al completarse: descarga de los **4 PDF por separado**, con nombre y certificado de firma, a `Folder_ID_Documentos_Firmados`; la Carta también a `Folder_ID_RRHH` 📄 §18; `WorkDrive_Docs_Firmados_URL` ✅ (campo). Dispara el 05 v2 ⏳ (directo o por cambio de estado). |
+| Validaciones | Descarta el evento duplicado `RequestSigningSuccess` + `completed` ✅; exige `request_status = completed` y `request_name` con "MP -" ✅; sin `webhook_inbox` ni `idempotency_key` (1.3). Credencial Zoho con WorkDrive `lRBD9utZoqJjYHEW` ✅. |
+| Salidas | `Sign_Status_*` y `Sign_Detalle_*` por documento ✅ (`COMPLETED` ×4; `RECALLED` en SO-00077 cancelada). Al completarse: descarga de los **4 PDF por separado** ("<documento> - <SO>.pdf") y del certificado ("MP - Certificado de firmas - <SO>.pdf") a `Folder_ID_Documentos_Firmados`; la Carta también a `Folder_ID_RRHH` ✅ (1.3). **No escribe** `Estado_Solicitud` ni `WorkDrive_Docs_Firmados_URL`. **Dispara el 05 v2 por HTTP directo** (`mp-carta-firmada-v2`) ✅, no por cambio de estado. |
 
 ### Paso 4 — 05 v2 LoanDisk + decisión BG (`iPM3haUtdcof745M`)
 
@@ -122,29 +264,34 @@ Leyenda: ✅ confirmado en CRM/Sign/registros · 📄 según Prompt Maestro §18
 
 - **Endpoint y cuentas (§2, §18):** `conexionbg.bgeneral.cloud`; cuenta origen producción `0301000001265`; QA `bg-h2h-qa2` con cuenta de certificación `0301011367700`.
 - **Comportamiento del 06 prod:** no ejecuta la transferencia; la deja **pendiente de aprobación** en Banca en Línea, donde Diego (único firmante, §13.3) aprueba o rechaza. Esto es un control natural contra desembolsos erróneos y debe mantenerse en la app.
-- **Selector de ambiente:** `bg_ambiente ∈ {qa, prod}` decidido en el 05 v2. La app usa el mismo parámetro; staging y pruebas siempre `qa`.
+- **Selector de ambiente:** `bg_ambiente ∈ {qa, prod}` es una **constante en el Code node "Config MP" del 05 v2** (hoy `'prod'`), que elige la URL del webhook del 06. No existe variable de entorno ni parámetro. La app lo convierte en parámetro de entorno (`qa` en staging y pruebas) y `lib/banking` llama al mismo webhook con el mismo contrato (R26).
 - **Campos CRM relacionados con BG (API names reales):** `Aprobaciones_BG` (etiqueta "Codigo Pago", integer), `Referencia_de_Transferencia` (etiqueta "Confirmacion", text), `Banco_Desembolso` (picklist: Banco General, BAC, Banistmo, Caja de Ahorros, Banco Nacional, Global Bank), `Tipo_de_Cuenta` (Cuenta de Ahorros / Cuenta Corriente), `Es_Titular_de_la_Cuenta` (Si/No), `Numero_de_Cuenta` (text), `Titular_Cuenta_Completo` (text), `Folder_ID_Desembolso`, `WorkDrive_Desembolso_URL`.
 - **Observado:** al 01-oct-2026 11:09 `Aprobaciones_BG` estaba vacío en SO-00078/79. El 02-oct-2026 SO-00079 generó la transferencia BG con **código 18524**, pendiente de aprobación de Diego en Banca en Línea (validado por Gianclaudio). El `codigoPago 12317` de la prueba QA no quedó en CRM. Confirmar en el Brief 12 que el 07 escribe el código en `Aprobaciones_BG` y la referencia en `Referencia_de_Transferencia`.
-- **Estructura del payload de transferencia:** **pendiente** (sección 1). Hipótesis a confirmar: nombre + apellido del beneficiario, cédula, banco destino (código BG), tipo de cuenta, número de cuenta, monto, referencia/descripción, cuenta origen, ambiente.
+- **Estructura del payload de transferencia:** documentada en 1.5 (12 campos: `descripcion, monto, fechaInicial, trnPropia, codigoProducto, cuentaOrigen, correo, nombreBeneficiario, codigoBanco, codigoProductoBeneficiario, numeroCuentaBeneficiario, secuencial`; sin moneda ni cédula del beneficiario; códigos de banco en "Limpiar Campos"). Contrato de entrada del 06 que `lib/banking` debe reproducir: `crm_id, monto, nombre_beneficiario, cuenta_beneficiario, banco_beneficiario, tipo_cuenta, id_solicitante, email_beneficiario`.
+- **Autenticación BG:** `GET /autenticacion/autenticar` con client-id/secret → `Token` → cabecera de autorización del POST. Hoy las claves están en texto plano en los nodos (R23).
 
 ## 3. LoanDisk
 
 | Dato | Valor | Fuente | Estado |
 |---|---|---|---|
-| Producto | `383523` "Micropago Flat 1025", Flat Rate, interés sobre el monto original, cuota constante; rango de interés del producto min 18 / max 30 | §18 | Confirmar en nodo del 05 v2 |
+| Producto | `383523` "Micropago Flat 1025", Flat Rate, interés sobre el monto original, cuota constante; rango de interés del producto min 18 / max 30 | §18 + Config MP del 05 v2 | **Confirmado** (1.4) |
 | Productos que **no** se usan | 369108, 369109, 383112 | §18 | — |
-| Ciclo 10-25 | `loan_payment_scheme_id = 4646` | §18 | Confirmar en nodo |
-| Ciclo 15-30 | `loan_payment_scheme_id = 4418`; pendiente habilitarlo en el producto 383523 | §18, §17 | Pendiente Gisela |
+| Ciclo 10-25 | `loan_payment_scheme_id = 4646` | §18 + Config MP | **Confirmado** (1.4) |
+| Ciclo 15-30 | `loan_payment_scheme_id = 4418`; pendiente habilitarlo en el producto 383523 | §18 + Config MP | Confirmado el ID; habilitación pendiente (Gisela) |
 | Ciclo prohibido | `Bimonthly` (ID 12): por API genera cuotas cada 2 meses | §18 | Regla en `parametros` |
 | Branch por afiliado | AF-0033 → `92588`; AF-0031 → `91008` | CRM `Afiliados.LoanDisk_Branch_ID` | Confirmado |
 | Herencia del branch a la solicitud | Regla CRM "LoanDisk_BranchID" (create) copia `Afiliados.LoanDisk_Branch_ID` a `Solicitudes_Microprestamo.LoanDisk_Branch_ID` | `getWorkflowRules` | Confirmado (SO-00077/78/79 = 92588) |
 | Cuenta LoanDisk | Public Key `75055`, Branch principal `87572` | §2 | — |
-| `loan_disbursed_by_id` | Pendiente | Nodo del 05 v2 | **Pendiente** |
+| `loan_disbursed_by_id` | **285809** (ACH) | Config MP del 05 v2 (1.4) | Confirmado |
+| Método / periodo / plazo / cuotas | `flat_rate` · `percentage` · `Month` · `3 Months` · 6 cuotas · `round_off_to_two_decimal` | Config MP (1.4) | Confirmado |
+| Custom fields del borrower | 27898 Bank Account · 27899 Bank · 27951 Identificación · 28102 Account Type | 05 v2 (1.4) | Confirmado |
+| `loan_application_id` | `ID_Solicitante` con espacio ("SO -00079") | 05 v2 | Confirmado; normalizar en la app |
+| URL base | `https://api-main.loandisk.com/75055/{branch}` (public key en la ruta; Basic en header) | 05 v2 | Confirmado |
 | Número de préstamo | Se guarda en CRM `Prestamo_No` (bigint): SO-00078 → `11909610` (referencia §18), SO-00079 → `11913796` | COQL | Confirmado |
 | Casos de referencia v1 | **SO-00078 / 11909610** ($100, 24 %, 6 × 28.67, total 172.00) y **SO-00079 / 11913796** ($300, 24 %, 6 × 86.00, total 516.00; BG código 18524) | Gianclaudio 02-oct-2026 + COQL | Confirmado |
 | Préstamo histórico de referencia | `16860`: 300.00 → 420.00, 16 %/mes, 5 cuotas de 84.00 | §4.4 | Reproducido en §5 |
 | **FECI** | **Exento** para micropréstamos: regla "Small loan: monto original ≤ B/.5,000 → FECI 0 %". El fee "FECI %" (ID `15489`) existe en la cuenta y no debe adjuntarse. | Doc "LoanDisk FECI Configuration Guide" (01-oct-2026) | Confirmado; parámetro de producto `feci_pct = 0` |
-| Comisión de cierre, timbres, seguro | Pendiente | Nodo del 05 v2 (fees) | **Pendiente** |
+| Comisión de cierre, timbres, seguro | **Ninguno**: el loan se crea sin fees ni custom fields | 05 v2 (1.4) | Confirmado; `parametros` arranca con fees = 0 |
 | Campos CRM LoanDisk en `Afiliados` sin uso | `Loan_Product`, `Number_of_Payments`, `Repayment_Cycle` (text, vacíos en AF-0031 y AF-0033) | `getFields` + COQL | Documentado; no son fuente |
 
 **Regla (reconfirmada el 02-oct-2026):** las pruebas manuales en LoanDisk **nunca** usan números `SO-` ni numeración en secuencia: un préstamo de prueba creado como "SO -00079" bloqueó el préstamo real de SO-00079. Usar prefijo propio (p. ej. `TEST-`) y branch de pruebas.
@@ -155,13 +302,13 @@ Leyenda: ✅ confirmado en CRM/Sign/registros · 📄 según Prompt Maestro §18
 CRM Afiliados.Taza_de_Interes (percent; Diego la coloca)
    └─(copia al crear la solicitud: Creator/Deluge o N8N — tramo PENDIENTE de confirmar)─▶
 CRM Solicitudes_Microprestamo.Tasa_Nominal = Tasa_Efectiva (percent)
-   └─(05 v2 iPM3haUtdcof745M — expresión PENDIENTE)─▶ LoanDisk loan_interest
+   └─(05 v2: "Validar Solicitud" interes = Number(Tasa_Nominal) > 0 → toFixed(4) = "24.0000")─▶ LoanDisk loan_interest (flat_rate, percentage, Month)
 ```
 
 Evidencia:
 - AF-0033 "Prueba Inc." tiene `Taza_de_Interes = 24`; sus solicitudes SO-00077, SO-00078 y SO-00079 tienen `Tasa_Nominal = Tasa_Efectiva = 24`. AF-0031 "Acme Corporation Inc." tiene `Taza_de_Interes = 4`.
 - Las acciones de campo "Asignar Tasa Nominal 18" y "Asignar Tasa Efectiva 18" (valor fijo 18, creadas 04/05-may-2026) existen pero están **desasociadas** (`associated: false`): la tasa fija de la v0 ya no aplica. Confirma §16.2.
-- Ninguna regla de workflow de CRM copia la tasa del afiliado a la solicitud; por tanto lo hace el formulario Creator (Deluge) o N8N. Se confirma con el código Deluge (§7) o con el 05 v2.
+- Ninguna regla de workflow de CRM copia la tasa del afiliado a la solicitud. El 05 v2 la lee ya puesta en `Tasa_Nominal`; un comentario del nodo dice que "el Flow" la copia desde el afiliado, es decir, Zoho Flow / Creator al crear la solicitud (se confirma con el código Deluge, §7). El 05 v2 **no valida** la tasa contra el rango del producto (18–30) ni contra parámetros.
 
 Plazo, frecuencia y cuotas:
 - `Cuotas` es picklist `6` / `9` (quincenas). Las tres solicitudes observadas usan `6` (= 3 meses). No existe `12`, `18` ni `24` (ver `docs/RIESGOS.md` R14).
@@ -171,25 +318,25 @@ Plazo, frecuencia y cuotas:
 
 ## 5. Letra y redondeo
 
-Script: `tests/inventario/letra_v1.mjs` (`node tests/inventario/letra_v1.mjs`, exit 0). Salida del 02-oct-2026:
+Script: `tests/inventario/letra_v1.mjs` (`node tests/inventario/letra_v1.mjs`, exit 0), actualizado a la regla §4.6-a v5.1 (02-oct-2026). Salida del 02-oct-2026:
 
 ```
-SO-00078 / 11909610      cuotas= 6 cuota=28.67 (OK) total_formula=172.02 (DIF 0.02) total_interes_simple=172.00 (OK)
-SO-00079 / 11913796      cuotas= 6 cuota=86.00 (OK) total_formula=516.00 (OK) total_interes_simple=516.00 (OK)
-16860                    cuotas= 5 cuota=84.00 (OK) total_formula=420.00 (OK) total_interes_simple=420.00 (OK)
-§4.6 $300 4% 3m          cuotas= 6 cuota=56.00 (OK) total_formula=336.00 (OK) total_interes_simple=336.00 (OK)
-§4.6 $300 4% 6m          cuotas=12 cuota=31.00 (OK) total_formula=372.00 (OK) total_interes_simple=372.00 (OK)
-§4.6 $300 4% 9m          cuotas=18 cuota=22.67 (OK) total_formula=408.06 (DIF 0.06) total_interes_simple=408.00 (OK)
-§4.6 $300 4% 12m         cuotas=24 cuota=18.50 (OK) total_formula=444.00 (OK) total_interes_simple=444.00 (OK)
+SO-00078 / 11909610    LoanDisk cuotas= 6 cuota=28.67 (OK) ultima=28.65 (OK) total=172.00 (OK) suma=OK [cuota×cuotas=172.02, dif 0.02]
+SO-00079 / 11913796    LoanDisk cuotas= 6 cuota=86.00 (OK) ultima=86.00 (OK) total=516.00 (OK) suma=OK
+16860                  LoanDisk cuotas= 5 cuota=84.00 (OK) ultima=84.00 (OK) total=420.00 (OK) suma=OK
+§4.6 $300 4% 3m        PM       cuotas= 6 cuota=56.00 (OK) ultima=56.00 (OK) total=336.00 (OK) suma=OK
+§4.6 $300 4% 6m        PM       cuotas=12 cuota=31.00 (OK) ultima=31.00 (OK) total=372.00 (OK) suma=OK
+§4.6 $300 4% 9m        PM       cuotas=18 cuota=22.67 (OK) ultima=22.61 (OK) total=408.00 (OK) suma=OK [cuota×cuotas=408.06, dif 0.06]
+§4.6 $300 4% 12m       PM       cuotas=24 cuota=18.50 (OK) ultima=18.50 (OK) total=444.00 (OK) suma=OK
 
-Cuota y capital+interés coinciden con LoanDisk en todos los casos.
+Cuota, última cuota y total coinciden con LoanDisk / §4.6 en todos los casos.
 ```
 
 Conclusiones:
-1. La **cuota** de §4.6-a (`redondear2(monto/cuotas + monto×tasa/100/2)`) reproduce exactamente las cuotas reales de CRM/LoanDisk (28.67 y 86.00) y el préstamo 16860 (84.00).
-2. El **total** definido en §4.6-a como `cuota × cuotas` difiere en centavos del total real cuando la cuota no es exacta: 172.02 vs 172.00 (SO-00078 / 11909610; SO-00077 tenía los mismos parámetros y fue cancelada) y 408.06 vs 408.00 (tabla §4.6). SO-00079 / 11913796 ($300, 24 %, 6 cuotas de 86.00) no tiene diferencia: 516.00 por ambas vías. El total real de LoanDisk es `capital + monto × tasa × meses` (interés flat), y LoanDisk reparte la diferencia dentro de su calendario (por confirmar en el cronograma del préstamo 11909610 si la última cuota absorbe los centavos: 5 × 28.67 + 28.65 = 172.00).
-3. **Regla vinculante para el Brief 06** (Gianclaudio, 02-oct-2026): la fuente de verdad del total y del calendario es el calendario que devuelve LoanDisk. `/api/quote` muestra cuota y total estimados; al crear el préstamo, `mp_loandisk_crear` guarda el calendario de LoanDisk en `evaluaciones.snapshot` y los documentos y el estado de cuenta se generan desde ese snapshot. No se recalcula por fórmula. Pendiente Brief 06: leer el cronograma real del 11909610 y fijar en el test cómo se reparten los centavos.
-4. **Secuencia Sign → LoanDisk (afecta a Briefs 06 y 10).** Hoy, y según §8 (`mp_loandisk_crear` se dispara en `docs_firmados`), el préstamo en LoanDisk se crea **después** de firmar los 4 documentos, pero §4.6-e genera los documentos desde el snapshot congelado al enviar. Por tanto `monto_total` del Contrato (sección 8) no puede salir del calendario de LoanDisk. Regla propuesta para el Brief 06: (a) la cotización y los documentos usan `total = monto + monto × tasa × plazo_meses / 100` (capital + interés flat), que coincide con el total de LoanDisk en los seis casos reproducidos; (b) tras crear el préstamo, el calendario de LoanDisk gobierna importes y fechas por cuota y se guarda en el snapshot; (c) si el total de LoanDisk difiere del total documentado, `mp_loandisk_crear` **alerta** al analista y a Diego; nunca se absorbe en silencio. Pendientes: abrir el Contrato firmado de SO-00078 y anotar qué puso la v1 en `monto_total` (172.00 o 172.02); decidir con Gianclaudio si §4.6-a debe redefinir `total_pagar` como capital + interés (cambio al Prompt Maestro, requiere aprobación).
+1. La **cuota** `redondear2(total / cuotas)` (equivalente a `monto/cuotas + monto×tasa/100/2`) reproduce exactamente las cuotas reales de CRM/LoanDisk (28.67 y 86.00) y el préstamo 16860 (84.00).
+2. El **total** real de LoanDisk es `capital + monto × tasa × meses / 100` (interés flat). La definición anterior de §4.6-a (`cuota × cuotas`, v5) difería en centavos cuando la cuota no es exacta: 172.02 vs 172.00 (SO-00078 / 11909610; SO-00077 tenía los mismos parámetros y fue cancelada) y 408.06 vs 408.00 (tabla §4.6). SO-00079 / 11913796 no tiene diferencia: 516.00 por ambas vías.
+3. **Regla aprobada el 02-oct-2026 (Gianclaudio) y escrita en §4.6-a v5.1:** `total_pagar = capital + interés flat`; cuota redondeada a centavos; la **última cuota absorbe la diferencia** (SO-00078: 5 × 28.67 + 28.65 = 172.00; $300 al 4 % a 9 meses: 17 × 22.67 + 22.61 = 408.00). El calendario que devuelve LoanDisk es la fuente de verdad del snapshot: `mp_loandisk_crear` lo guarda en `evaluaciones.snapshot` y, si difiere del total o de las cuotas calculadas, **alerta** al analista y a Diego; nunca se absorbe en silencio ni se recalcula por fórmula. Pendiente Brief 06: confirmar en el cronograma real del 11909610 que LoanDisk también carga los centavos en la última cuota (si los reparte distinto, manda LoanDisk y la alerta lo señala). **Nota del inventario de nodos:** la respuesta de LoanDisk al crear el préstamo solo trae `loan_id`; ningún workflow consulta el cronograma, así que la última cuota de 28.65 es aritmética de la regla aprobada, no un dato observado.
+4. **Secuencia Sign → LoanDisk (afecta a Briefs 06 y 10).** Hoy, y según §8 (`mp_loandisk_crear` se dispara en `docs_firmados`), el préstamo en LoanDisk se crea **después** de firmar los 4 documentos, pero §4.6-e genera los documentos desde el snapshot congelado al enviar. Por tanto `monto_total` del Contrato (sección 8) sale de la fórmula aprobada en el punto 3, no del calendario de LoanDisk; el calendario gobierna importes y fechas por cuota a partir de la creación del préstamo. Pendiente: abrir el Contrato firmado de SO-00078 y anotar qué puso la v1 en `monto_total` (172.00 o 172.02).
 
 ## 6. Zoho CRM
 
@@ -219,6 +366,10 @@ Módulos: `Afiliados` (id `6982798000002954562`), `Solicitudes_Microprestamo` (i
 | `ID_Zoho_Sign_Document_ID`, `Fecha_Env_o_Contrato`, `Fecha_Firma_Interna`, `Fecha_Firma_Afiliado` | firma del convenio (v0) | | Ya no aplica: convenio en físico |
 | `Loan_Product`, `Number_of_Payments`, `Repayment_Cycle` | LoanDisk | text | Vacíos; no son fuente |
 | **No existe** `Modo_Validacion` | | | Debe crearse en el Brief 05 (cambio en CRM con aprobación) |
+
+### 6.4 Dónde vive el NUC (decisión 3, 02-oct-2026)
+
+El Número Único de Cliente **ya existe** en CRM como **`Contacts.C_digo_nico`** (etiqueta "Código único", text 255, custom, **sin restricción de unicidad**), formato `IS-00NNNN` (p. ej. `IS-004408`); 69 contactos lo tienen al 02-oct-2026 y la numeración no sigue el orden de creación (se asigna fuera de CRM o al convertir el lead). `Expedientes` (otra línea de negocio) tiene el mismo campo. **No hay** campo NUC en `Solicitudes_Microprestamo` ni en `Afiliados`, ni lookup de la solicitud a `Contacts`: hoy el enlace solo puede hacerse por cédula (`Solicitudes_Microprestamo.C_dula_ID` ↔ `Contacts.C_dula_o_Pasaporte`). **Propuesta (no crear campo nuevo):** `ensure_cliente(cedula)` busca el `Contact` por cédula, lee o asigna `C_digo_nico` con la misma secuencia `IS-`, y el Brief 05 añade a `Solicitudes_Microprestamo` un lookup `Contacto` (cambio en CRM con aprobación) para dejar de depender de la cédula como llave. Pendiente Gianclaudio: confirmar que `IS-00NNNN` es el NUC oficial y quién asigna la secuencia.
 
 Afiliados existentes (COQL, `ID_Afiliado is not null`): 2 registros, ambos de prueba: `AF -0031` Acme Corporation Inc. (18-may-2026, branch 91008, tasa 4) y `AF-0033` Prueba Inc. (29-sep-2026, branch 92588, tasa 24, comisión 4, ciclo 10-25). El afiliado real del piloto se definirá al momento de la prueba (§4.3-bis).
 
@@ -286,7 +437,7 @@ Webhooks: los dos de Zoho Flow (uno por módulo), `POST` a `flow.zoho.com/901020
 | `mp_enviar_a_zoho_sign1` | Regla "MP - Enviar Documentos a Firma" (CRM) | Con la conexión `zoho_sign` une los 4 templates en un sobre único (`templates/mergeview` + `templates/mergesend`), envía al solicitante con el nombre y guarda el mismo `request_id` en los 4 campos `Sign_Request_ID_*` (§18; confirmado en SO-00078/79). Pendiente ver cómo llena los campos de merge (§8) y el orden RRHH. | **Pendiente**: Gianclaudio pegará el código. |
 | Función de "Calcular Fecha Inicio Descuento" | Regla CRM create_or_edit | Escribe `Fecha_Inicio_Descuento` = próxima fecha de planilla estrictamente posterior según `Frecuencia_de_Planilla` del afiliado (resultado 2026-10-10 para 29-sep/30-sep/01-oct con 10-25). Se replica con la regla §4.6-b y sus tests (Brief 06). | Pendiente (no expuesto por API; opcional, la regla ya está formalizada en §4.6-b). |
 | `procesarCSVEnCreator` | Zoho Flow / Creator | Upsert de la Base Diaria en Creator `Empleados` | **No se documenta**: Creator se retira (decisión 02-oct-2026). |
-| Copia de la tasa afiliado → solicitud | Formulario Creator o N8N | Ver §4 | Pendiente (se resuelve con `mp_enviar_a_zoho_sign1` o con el 05 v2). |
+| Copia de la tasa afiliado → solicitud | Zoho Flow / Creator al crear la solicitud (comentario en el 05 v2) | Ver §4 | Pendiente de confirmar en Deluge |
 
 ## 8. Zoho Sign — templates
 
@@ -302,7 +453,7 @@ Propietario `glopolito@isthmuscap.com`; todos secuenciales, expiración 15 días
 Notas:
 - Los nombres de campo (`field_name`) están vacíos; el merge usa `field_label`. Un mismo label repetido (p. ej. `cedula` ×2) se rellena con el mismo valor.
 - `cuota_mensual` en los documentos es en realidad la **cuota quincenal** (coincide con `Letra_Mensual` = "Letra Quincenal" en CRM). Revisar el texto legal en el Brief 10.
-- **Discrepancia con §13.2:** Contrato y Carta conservan un paso `APPROVER` de Isthmus (Gisela) y la Carta tiene 3 pasos. Ver `docs/RIESGOS.md` R13; se decide en el Brief 10.
+- **Discrepancia con §13.2:** Contrato y Carta conservan un paso `APPROVER` de Isthmus (Gisela) y la Carta tiene 3 pasos. **Decisión 02-oct-2026: queda como está hasta que Diego decida**; registrado como pendiente de Diego (R13, §12).
 - Para la app (`mp_sign_enviar`): necesita por documento los valores de arriba más `numero_prestamo` (no existe antes de crear el préstamo en LoanDisk: hoy el orden es Sign → LoanDisk, por lo que hay que confirmar qué se pone en `numero_prestamo`; probablemente el `SO`).
 
 ## 9. Monday (solo lectura, durante la migración del flujo BG)
@@ -322,6 +473,7 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 
 - Organización: `Isthmus Capital` (`dsokfwbgooixlpjflflv`).
 - Proyectos existentes: `isthmus-cotizador` (`aezbofbjcuwjwoanmscx`, us-east-1, PG 17) y `maxmotors-precios` (`ktdycqrkhccpycrsoszb`, us-east-1, PG 17).
+- Plan de la organización: **Free** (Gianclaudio, 02-oct-2026); el MCP no expone el plan.
 - **`isthmus-mp` no existe.** Pendiente upgrade a Pro antes de crearlo (Brief 03). Ver `docs/RIESGOS.md` R10.
 
 ## 11. Accesos
@@ -331,7 +483,7 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 | SSH al VPS desde VS Code | OK | Esta sesión corre en `isthmus-n8n` (`5.78.214.136`) como `root`; Brief 01 crea `deploy`. Contenedores activos: `cotizador-app` :3001, `maxmotors-app` :3002, `n8n-n8n-1` :5678, `n8n-postgres-1`, `gotenberg` :3000. Node 22.22.1, npm 9.2.0, Docker 29.7.2, Caddy, Python 3.14. |
 | DNS `mp.isthmuscap.com` | **Sin registro A** | `dig +short` vacío. Idem `staging-mp.` y `microprestamos.`. `automation.isthmuscap.com` → 5.78.214.136. Crear en el Brief 01. |
 | Supabase `isthmus-mp` | **Pendiente** (upgrade Pro) | §10 |
-| Token WhatsApp en `.env` | OK | `.env` con permisos 600 (root); 5 claves `WHATSAPP_*`; `WHATSAPP_PHONE_NUMBER_ID = 1184886231372996`, `WHATSAPP_BUSINESS_ACCOUNT_ID = 4466216373701343`, `WHATSAPP_APP_ID = 1360854289567229`, `WHATSAPP_TEMPLATE_OTP = fic_mp_codigo_acceso` (coinciden con §14); `WHATSAPP_TOKEN` presente (194 caracteres, no se imprime). Pendiente Brief 04: validar con el Access Token Debugger y planificar rotación. |
+| Token WhatsApp en `.env` | OK | `.env` con permisos 600 (root); 5 claves `WHATSAPP_*`; `WHATSAPP_PHONE_NUMBER_ID = 1184886231372996`, `WHATSAPP_BUSINESS_ACCOUNT_ID = 4466216373701343`, `WHATSAPP_APP_ID = 1360854289567229`, `WHATSAPP_TEMPLATE_OTP = fic_mp_codigo_acceso` (coinciden con §14); `WHATSAPP_TOKEN` presente (no se imprime). Pendiente Brief 04: validar con el Access Token Debugger y planificar rotación. |
 | Credencial N8N `Meta WhatsApp MP` | **Sin confirmar** | Bloqueo del MCP n8n (sección 0). Gianclaudio la crea o confirma. |
 | Playwright en el VPS | **No soportado nativo** | Playwright 1.56 no soporta Ubuntu 26.04 (`npx playwright install chromium` falla) y el MCP de Playwright no encuentra Chrome. Brief 02: correr Playwright en Docker (`mcr.microsoft.com/playwright`). Las capturas del Brief 00 se hicieron con Gotenberg (`gotenberg/gotenberg:8`, v8.34.0, contenedor existente). |
 | Remoto git | **No hay** | `git remote -v` vacío; MCP GitHub falló al conectar. Ver R11. |
@@ -340,20 +492,26 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 ## 12. Pendientes y bloqueantes
 
 **Bloqueantes**
-1. **MCP n8n re-autenticado** (Gianclaudio, en claude.ai → conectores). Sin esto no hay payload BG ni IDs LoanDisk "tal como viajan" (secciones 1–3). **Criterio de aceptación 1 del Brief 00: parcialmente cumplido**; se cierra al completar la sección 1, en todo caso **antes del Brief 11** (consumidor real junto con el 12; §13.4 asigna esa lectura al Brief 11). Alternativa: autorizar explícitamente una lectura `SELECT` de solo lectura sobre la BD de n8n.
+1. ~~MCP n8n re-autenticado~~ **Resuelto el 02-oct-2026**: sección 1 completada por MCP (05 v2, 06 QA/prod, credenciales; 03/04 en 1.2–1.3). **Criterio de aceptación 1 del Brief 00: cumplido** en IDs LoanDisk y payload BG; queda abierto solo el cronograma real de LoanDisk (no visible en N8N; se lee por API en el Brief 06).
 2. **Supabase Pro** antes del Brief 03.
 3. **Remoto git** o backup off-site antes del Brief 01.
 
 **Pendientes (no bloquean el Brief 01/02)**
 4. Código Deluge de `mp_enviar_a_zoho_sign1` (Gianclaudio lo pega).
-5. Confirmar `loan_disbursed_by_id`, `loan_payment_scheme_id` por ciclo y fees (cierre, timbres, seguro) en el 05 v2.
+5. ~~Confirmar `loan_disbursed_by_id`, esquemas y fees en el 05 v2~~ Resuelto (1.4): 285809, 4646/4418, sin fees.
 6. Gisela: habilitar el esquema 15-30 (4418) en el producto 383523; confirmar cómo LoanDisk reparte los centavos en el cronograma del 11909610.
-7. Diego: decidir si se elimina el paso APPROVER de Gisela en los templates Contrato y Carta (R13); semántica de `L_mite_para_nuevos_descuentos` y `Fecha_de_corte_de_planilla`.
+7. Diego: el paso APPROVER de Gisela en los templates Contrato y Carta **queda como está hasta que él decida** (decisión 02-oct-2026, R13); semántica de `L_mite_para_nuevos_descuentos` y `Fecha_de_corte_de_planilla`.
 8. Crear `Modo_Validacion` en CRM `Afiliados` y ampliar picklists `Cuotas`/`Monto_Solicitado` (Brief 05, cambios en CRM con aprobación).
 9. Crear DNS `mp.` y `staging-mp.` (Brief 01).
-10. Credencial N8N `Meta WhatsApp MP`: confirmar o crear.
+10. Credencial N8N `Meta WhatsApp MP`: **no existe** (`list_credentials`); crearla con el token del `.env` (Gianclaudio) antes del Brief 04.
 11. Diseñar y aprobar las 5 pantallas con Diego antes del Brief 02.
 12. Brief 02: Playwright en Docker (no hay soporte nativo de Chromium en Ubuntu 26.04).
 13. Validar en vivo el 03 KYC corregido (publicado el 02-oct-2026) con el próximo KYC real; anotar el resultado aquí.
-14. Diego: aprobar en Banca en Línea la transferencia BG código 18524 de SO-00079 y confirmar que el 07 la refleja en CRM (`Desembolsada`).
-15. Brief 06/10: abrir el Contrato firmado de SO-00078 y anotar el `monto_total` real (172.00 o 172.02); decidir con Gianclaudio la redefinición de `total_pagar` en §4.6-a (ver §5, punto 4).
+14. Diego: aprobar en Banca en Línea la transferencia BG código 18524 de SO-00079. **No existe 07 ni polling**: el estado final no llega a CRM; `Aprobaciones_BG` nunca se escribe. La app implementa `mp_bg_polling` (Brief 12).
+16. **Seguridad (urgente, fuera del alcance de la app):** mover a credenciales de N8N y rotar las claves de BG (prod y QA) y la Basic de LoanDisk que están en texto plano en los nodos del 05 v2, 06 y 5wHL8; poner autenticación a los webhooks `bg-crear-transferencia` y `mp-carta-firmada-v2`. Cambios en N8N: se muestran y se aprueban antes (CLAUDE.md).
+17. LoanDisk (Gisela): revisar los préstamos huérfanos de prueba 11909205 (SO-00078) y 11909301 (SO-00079, con número SO) y el borrower duplicado de la cédula de SO-00078.
+18. Confirmar con Gianclaudio que `Contacts.C_digo_nico` (`IS-00NNNN`) es el NUC oficial y quién asigna la secuencia (6.4).
+19. **Urgente (Gianclaudio): verificar en el canvas del 03 KYC** las salidas false de "IF - Solicitud Encontrada" e "IF - Seguir Esperando" y corregir el cableado, `transaction_id` (`body.transactionId`) y el orden del WhatsApp antes del próximo KYC real (1.2). Cambios en N8N: mostrar y aprobar antes.
+20. WhatsApp del 03: pasar a plantilla aprobada (`fic_mp_codigo_acceso` o una UTILITY nueva) con enlace https; mover el token de Meta a la credencial `Meta WhatsApp MP`; implementar la rama de rechazo.
+21. N8N: activar la redacción de datos en ejecuciones (`redaction.production`) y revisar la retención; los tokens de filevault de IDAnalyzer permiten descargar los reportes KYC sin autenticación.
+15. Brief 06/10: abrir el Contrato firmado de SO-00078 y anotar el `monto_total` real (172.00 o 172.02). La redefinición de `total_pagar` en §4.6-a ya está aprobada y escrita (v5.1, 02-oct-2026).
