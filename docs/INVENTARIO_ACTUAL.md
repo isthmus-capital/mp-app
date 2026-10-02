@@ -55,11 +55,11 @@ Leyenda: ✅ confirmado en CRM/Sign/registros · 📄 según Prompt Maestro §18
 | Orden real | En el flujo del cliente el formulario llega **después** del KYC: el 03 envía por WhatsApp el enlace del formulario al aprobarse IDAnalyzer (Paso 1). |
 | Observación | **No existe un campo NUC** en `Solicitudes_Microprestamo` ni en `Afiliados`; el NUC debe vivir en `Contacts` u otro módulo. Confirmar en el Brief 03/05 antes de `ensure_cliente`. |
 
-### Paso 1 — 03 KYC (IDAnalyzer DocuPass) — corregido y publicado el 02-oct-2026
+### Paso 1 — 03 KYC (IDAnalyzer DocuPass) — corregido y publicado por Gianclaudio el 02-oct-2026 (manualmente en N8N, fuera de esta sesión)
 
 | | Detalle |
 |---|---|
-| Workflow | "03" (ID ⏳). Profile IDAnalyzer `53067a87b10a41bd8771c34e9b7c53c4` 📄 §2. Versión corregida publicada el 02-oct-2026; **aún no validada en vivo**: la valida el próximo KYC real. |
+| Workflow | "03" (ID ⏳). Profile IDAnalyzer `53067a87b10a41bd8771c34e9b7c53c4` 📄 §2. Versión corregida publicada por Gianclaudio el 02-oct-2026, manualmente en N8N y fuera de esta sesión (desde esta sesión no se publicó ni modificó ningún workflow); **aún no validada en vivo**: la valida el próximo KYC real. |
 | Entradas | Callback de IDAnalyzer con el resultado de la verificación (cédula, sesión, estado aprobado/rechazado). Llega normalmente **antes** de que exista la solicitud. |
 | Comportamiento (v1 corregida) | 1. Al **aprobar** IDAnalyzer, el **WhatsApp con el enlace del formulario sale de inmediato**, sin depender de encontrar la solicitud (antes dependía de ella y casi nunca salía). Si el WhatsApp falla, **no frena** lo demás. 2. En paralelo busca la solicitud por cédula; si no existe, **reintenta cada 2 min hasta 15 veces (30 min)**. 3. Sin solicitud a los 30 min → correo desde **gestionprestamos@** a Gisela y a Gianclaudio con la cédula y el enlace de la ejecución, para reprocesarla. 4. Si la encuentra: guarda `IDAnalyzer_Session_ID` en CRM ✅ (presente en SO-00078/79) y sube **3 reportes** (Transaction, Face, Docupass Audit) al folder KYC (`Folder_ID_KYC`). |
 | Validaciones | Resultado/score de DocuPass; selfie con instrucción visual 📄 §4.1. |
@@ -174,18 +174,22 @@ Plazo, frecuencia y cuotas:
 Script: `tests/inventario/letra_v1.mjs` (`node tests/inventario/letra_v1.mjs`, exit 0). Salida del 02-oct-2026:
 
 ```
-SO-00077 / 11909610      cuotas= 6 cuota=28.67 (OK) total_formula=172.02 (DIF 0.02) total_interes_simple=172.00 (OK)
+SO-00078 / 11909610      cuotas= 6 cuota=28.67 (OK) total_formula=172.02 (DIF 0.02) total_interes_simple=172.00 (OK)
+SO-00079 / 11913796      cuotas= 6 cuota=86.00 (OK) total_formula=516.00 (OK) total_interes_simple=516.00 (OK)
 16860                    cuotas= 5 cuota=84.00 (OK) total_formula=420.00 (OK) total_interes_simple=420.00 (OK)
 §4.6 $300 4% 3m          cuotas= 6 cuota=56.00 (OK) total_formula=336.00 (OK) total_interes_simple=336.00 (OK)
 §4.6 $300 4% 6m          cuotas=12 cuota=31.00 (OK) total_formula=372.00 (OK) total_interes_simple=372.00 (OK)
 §4.6 $300 4% 9m          cuotas=18 cuota=22.67 (OK) total_formula=408.06 (DIF 0.06) total_interes_simple=408.00 (OK)
 §4.6 $300 4% 12m         cuotas=24 cuota=18.50 (OK) total_formula=444.00 (OK) total_interes_simple=444.00 (OK)
+
+Cuota y capital+interés coinciden con LoanDisk en todos los casos.
 ```
 
 Conclusiones:
 1. La **cuota** de §4.6-a (`redondear2(monto/cuotas + monto×tasa/100/2)`) reproduce exactamente las cuotas reales de CRM/LoanDisk (28.67 y 86.00) y el préstamo 16860 (84.00).
-2. El **total** definido en §4.6-a como `cuota × cuotas` difiere en centavos del total real cuando la cuota no es exacta: 172.02 vs 172.00 (SO-00077/78) y 408.06 vs 408.00 (tabla §4.6). El total real de LoanDisk es `capital + monto × tasa × meses` (interés flat), y LoanDisk reparte la diferencia dentro de su calendario (por confirmar en el cronograma del préstamo 11909610 si la última cuota absorbe los centavos: 5 × 28.67 + 28.65 = 172.00).
+2. El **total** definido en §4.6-a como `cuota × cuotas` difiere en centavos del total real cuando la cuota no es exacta: 172.02 vs 172.00 (SO-00078 / 11909610; SO-00077 tenía los mismos parámetros y fue cancelada) y 408.06 vs 408.00 (tabla §4.6). SO-00079 / 11913796 ($300, 24 %, 6 cuotas de 86.00) no tiene diferencia: 516.00 por ambas vías. El total real de LoanDisk es `capital + monto × tasa × meses` (interés flat), y LoanDisk reparte la diferencia dentro de su calendario (por confirmar en el cronograma del préstamo 11909610 si la última cuota absorbe los centavos: 5 × 28.67 + 28.65 = 172.00).
 3. **Regla vinculante para el Brief 06** (Gianclaudio, 02-oct-2026): la fuente de verdad del total y del calendario es el calendario que devuelve LoanDisk. `/api/quote` muestra cuota y total estimados; al crear el préstamo, `mp_loandisk_crear` guarda el calendario de LoanDisk en `evaluaciones.snapshot` y los documentos y el estado de cuenta se generan desde ese snapshot. No se recalcula por fórmula. Pendiente Brief 06: leer el cronograma real del 11909610 y fijar en el test cómo se reparten los centavos.
+4. **Secuencia Sign → LoanDisk (afecta a Briefs 06 y 10).** Hoy, y según §8 (`mp_loandisk_crear` se dispara en `docs_firmados`), el préstamo en LoanDisk se crea **después** de firmar los 4 documentos, pero §4.6-e genera los documentos desde el snapshot congelado al enviar. Por tanto `monto_total` del Contrato (sección 8) no puede salir del calendario de LoanDisk. Regla propuesta para el Brief 06: (a) la cotización y los documentos usan `total = monto + monto × tasa × plazo_meses / 100` (capital + interés flat), que coincide con el total de LoanDisk en los seis casos reproducidos; (b) tras crear el préstamo, el calendario de LoanDisk gobierna importes y fechas por cuota y se guarda en el snapshot; (c) si el total de LoanDisk difiere del total documentado, `mp_loandisk_crear` **alerta** al analista y a Diego; nunca se absorbe en silencio. Pendientes: abrir el Contrato firmado de SO-00078 y anotar qué puso la v1 en `monto_total` (172.00 o 172.02); decidir con Gianclaudio si §4.6-a debe redefinir `total_pagar` como capital + interés (cambio al Prompt Maestro, requiere aprobación).
 
 ## 6. Zoho CRM
 
@@ -336,7 +340,7 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 ## 12. Pendientes y bloqueantes
 
 **Bloqueantes**
-1. **MCP n8n re-autenticado** (Gianclaudio, en claude.ai → conectores). Sin esto no hay payload BG ni IDs LoanDisk "tal como viajan" (secciones 1–3). Alternativa: autorizar explícitamente una lectura `SELECT` de solo lectura sobre la BD de n8n.
+1. **MCP n8n re-autenticado** (Gianclaudio, en claude.ai → conectores). Sin esto no hay payload BG ni IDs LoanDisk "tal como viajan" (secciones 1–3). **Criterio de aceptación 1 del Brief 00: parcialmente cumplido**; se cierra al completar la sección 1, en todo caso **antes del Brief 11** (consumidor real junto con el 12; §13.4 asigna esa lectura al Brief 11). Alternativa: autorizar explícitamente una lectura `SELECT` de solo lectura sobre la BD de n8n.
 2. **Supabase Pro** antes del Brief 03.
 3. **Remoto git** o backup off-site antes del Brief 01.
 
@@ -352,3 +356,4 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 12. Brief 02: Playwright en Docker (no hay soporte nativo de Chromium en Ubuntu 26.04).
 13. Validar en vivo el 03 KYC corregido (publicado el 02-oct-2026) con el próximo KYC real; anotar el resultado aquí.
 14. Diego: aprobar en Banca en Línea la transferencia BG código 18524 de SO-00079 y confirmar que el 07 la refleja en CRM (`Desembolsada`).
+15. Brief 06/10: abrir el Contrato firmado de SO-00078 y anotar el `monto_total` real (172.00 o 172.02); decidir con Gianclaudio la redefinición de `total_pagar` en §4.6-a (ver §5, punto 4).

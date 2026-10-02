@@ -28,7 +28,8 @@ export function letraFlat({ monto, tasaMensualPct, cuotas }) {
 }
 
 const casos = [
-  { id: "SO-00077 / 11909610", esperadoLoanDisk: { cuota: 28.67, total: 172.0 }, calc: cuotaQuincenal({ monto: 100, tasaMensualPct: 24, plazoMeses: 3 }) },
+  { id: "SO-00078 / 11909610", esperadoLoanDisk: { cuota: 28.67, total: 172.0 }, calc: cuotaQuincenal({ monto: 100, tasaMensualPct: 24, plazoMeses: 3 }) }, // SO-00077 tenía los mismos parámetros y fue cancelada
+  { id: "SO-00079 / 11913796", esperadoLoanDisk: { cuota: 86.0,  total: 516.0 }, calc: cuotaQuincenal({ monto: 300, tasaMensualPct: 24, plazoMeses: 3 }) },
   { id: "16860",               esperadoLoanDisk: { cuota: 84.0,  total: 420.0 }, calc: letraFlat({ monto: 300, tasaMensualPct: 16, cuotas: 5 }) },
   { id: "§4.6 $300 4% 3m",     esperadoLoanDisk: { cuota: 56.0,  total: 336.0 }, calc: cuotaQuincenal({ monto: 300, tasaMensualPct: 4, plazoMeses: 3 }) },
   { id: "§4.6 $300 4% 6m",     esperadoLoanDisk: { cuota: 31.0,  total: 372.0 }, calc: cuotaQuincenal({ monto: 300, tasaMensualPct: 4, plazoMeses: 6 }) },
