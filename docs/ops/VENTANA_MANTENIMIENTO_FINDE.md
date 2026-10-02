@@ -30,7 +30,7 @@ iptables -S DOCKER-USER | grep -c DROP                                  # 1
 uname -r; ls /var/run/reboot-required                                   # kernel actual y reinicio pendiente
 ```
 
-- [ ] **Segunda terminal SSH abierta** durante toda la ventana, como `root` si el hardening de sshd aún no se aplicó, como `deploy` si ya se aplicó. El `apt upgrade` puede actualizar `openssh-server`; la sesión abierta sobrevive, pero la segunda es el seguro.
+- [ ] **Segunda terminal SSH abierta** durante toda la ventana. Con la fase 1 del hardening, `root` sigue entrando por llave; tras la fase 2 (`PermitRootLogin no`) solo `deploy` + `sudo -i`. El `apt upgrade` puede actualizar `openssh-server`; la sesión abierta sobrevive, pero la segunda es el seguro.
 
 ## 1. Dump previo (2 min)
 

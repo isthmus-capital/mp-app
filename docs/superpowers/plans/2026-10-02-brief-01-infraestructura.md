@@ -196,54 +196,92 @@ cd /opt/mp-app && git add ops/sudoers.d/deploy && git commit -m "ops(brief-01): 
 
 ---
 
-### Task 3: Hardening de SSH (solo tras el Checkpoint A)
+### Task 3: Hardening de SSH en dos fases (solo tras el Checkpoint A)
+
+**Cambio de plan (Gianclaudio, 02-oct-2026, tras revisar los logs de SSH):** las 814 entradas con llave usaron su única llave (`gianj@GLoPolito`); las líneas `signature ssh-rsa` son rechazos por `PubkeyAcceptedAlgorithms`; hubo **una** entrada de root con contraseña desde `5.78.214.136` el 04-sep (origen no identificado; no se repitió). Cotizador (`/opt/cotizador-isthmus`) y Max Motors (`/home/maxmotors`) son `root:root` y hoy se operan como root, así que cerrar root de golpe dejaría esos despliegues sin operador. Por eso:
+
+- **Fase 1 (hoy):** fuera contraseñas y teclado interactivo; root sigue entrando **solo por llave** (`PermitRootLogin prohibit-password`). Sin `AllowUsers`.
+- **Fase 2 (después):** `PermitRootLogin no` + `AllowUsers deploy`, solo cuando `deploy` pueda operar Cotizador y Max Motors (Task 3b).
+
+**Lectura previa (02-oct, solo lectura):** n8n no tiene credenciales SSH de ningún tipo (14 credenciales listadas por el MCP: OAuth, SMTP, Header Auth, SSL), así que ningún workflow puede entrar al VPS por SSH; sus llamadas al Cotizador y a Max Motors son HTTP vía Caddy y no dependen de sshd. Ni cotizador ni maxmotors usan bind mounts (imágenes construidas con `build`), no hay cron, hooks ni units que hagan `ssh` al propio host.
 
 **Files:**
-- Create: `ops/ssh/00-hardening.conf` → `/etc/ssh/sshd_config.d/00-hardening.conf`
+- Create: `ops/ssh/00-hardening.conf` → `/etc/ssh/sshd_config.d/00-hardening.conf` (fase 1; la fase 2 añade dos líneas al mismo archivo)
 
-- [ ] **Step 1: Confirmar el checkpoint y la sesión abierta**
+**Quién ejecuta:** el clasificador de permisos de Claude Code bloquea escribir en `/etc/ssh/sshd_config.d/` (02-oct). Los comandos de instalación los corre **Gianclaudio** desde su sesión root; Claude Code escribe el archivo del repo, verifica en solo lectura (`sshd -T`) y documenta.
 
-Run: `who`
-Expected: la sesión actual de Gianclaudio figura en `who` y el mensaje "Checkpoint A OK" consta en el chat. **No continuar sin él.**
+- [x] **Step 1: Checkpoint A** — confirmado por Gianclaudio el 02-oct-2026 ("Checkpoint A OK"): login `deploy` por VS Code, `docker ps`, `sudo -n systemctl status caddy`, `passwd deploy`.
 
-- [ ] **Step 2: Escribir el drop-in (nombre `00-` para ganar a `50-cloud-init.conf`)**
+- [x] **Step 2: Drop-in de fase 1 escrito en el repo** (nombre `00-` para ganar a `50-cloud-init.conf`, que fija `PasswordAuthentication yes`; el `sshd_config` principal tiene `PermitRootLogin yes` en la línea 54, también por debajo del drop-in)
 
-```bash
-mkdir -p /opt/mp-app/ops/ssh
-cat > /opt/mp-app/ops/ssh/00-hardening.conf <<'EOF'
-# Brief 01 — hardening SSH. Se lee antes que 50-cloud-init.conf (gana el primer valor).
-PermitRootLogin no
+```
 PasswordAuthentication no
 KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
 PubkeyAuthentication yes
 MaxAuthTries 4
 LoginGraceTime 30
 X11Forwarding no
-AllowUsers deploy
-EOF
+```
+
+- [ ] **Step 3: Instalar y recargar (Gianclaudio, sesión root; la segunda ventana como `deploy` queda abierta)**
+
+```bash
 install -m 644 -o root -g root /opt/mp-app/ops/ssh/00-hardening.conf /etc/ssh/sshd_config.d/00-hardening.conf
 sshd -t && echo "sshd config OK"
-```
-Expected: `sshd config OK`.
-
-- [ ] **Step 3: Recargar y verificar los valores efectivos**
-
-```bash
 systemctl reload ssh
-sshd -T 2>/dev/null | grep -Ei '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|allowusers) '
+sshd -T 2>/dev/null | grep -Ei '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|pubkeyauthentication|maxauthtries|logingracetime|x11forwarding) '
 ```
-Expected: `permitrootlogin no`, `passwordauthentication no`, `kbdinteractiveauthentication no`, `allowusers deploy`.
+Expected: `sshd config OK`; luego `permitrootlogin prohibit-password`, `passwordauthentication no`, `kbdinteractiveauthentication no`, `pubkeyauthentication yes`, `maxauthtries 4`, `logingracetime 30`, `x11forwarding no`. Si `sshd -t` falla: `rm /etc/ssh/sshd_config.d/00-hardening.conf` y no recargar.
 
-- [ ] **Step 4: Prueba desde fuera (Gianclaudio, desde su laptop)**
-
-Run: `ssh -o BatchMode=yes root@5.78.214.136 true; echo rc=$?` y `ssh deploy@5.78.214.136 'hostname'`
-Expected: para root `Permission denied (publickey)` con `rc=255`; para deploy `isthmus-n8n`. Criterio de aceptación 1 cumplido.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Prueba desde fuera (Gianclaudio, laptop, sin cerrar las sesiones abiertas)**
 
 ```bash
-cd /opt/mp-app && git add ops/ssh/00-hardening.conf && git commit -m "ops(brief-01): sshd hardening drop-in (no root, no passwords)" && git push origin main
+ssh -o BatchMode=yes -o PubkeyAuthentication=no root@5.78.214.136 true; echo rc=$?   # contraseña cerrada
+ssh root@5.78.214.136 hostname                                                        # root por llave sigue (fase 1)
+ssh deploy@5.78.214.136 hostname
 ```
+Expected: primera línea `Permission denied (publickey)` y `rc=255`; las otras dos `isthmus-n8n`. Pegar las salidas en el chat.
+
+- [ ] **Step 5: Commit (tres órdenes separadas, regla de CLAUDE.md)**
+
+`git add ops/ssh/00-hardening.conf` · `git commit -m "ops(brief-01): sshd hardening phase 1 (no passwords, root key-only)"` · `git push origin main`
+
+---
+
+### Task 3b: Fase 2 del hardening — `deploy` opera Cotizador y Max Motors, luego root fuera
+
+**Estado real (02-oct, solo lectura):** `/opt/cotizador-isthmus` es repo git (`master`, **sin remoto**: el historial solo existe en el VPS), `root:root 755`, `.env.production` y `.env.local` en **644** (legibles por cualquier usuario del host). `/home/maxmotors` no es repo; `/home/maxmotors/app` sí (sin remoto), `root:root`, `.env.local` 644; no existe usuario `maxmotors`. Despliegue en ambos: editar en sitio → `docker tag <imagen>:latest <imagen>:pre-<brief>` → `docker compose up -d --build`. Ningún bind mount: cambiar dueños o editar el árbol **no afecta** al contenedor en marcha; solo un `up -d --build` explícito lo cambia.
+
+**Propuesta (mismo modelo que `/opt/mp-app`, D9):** `deploy` pasa a ser el dueño de los dos árboles; root conserva acceso (no lo limitan los permisos) pero deja de ser el operador. `deploy` ya está en el grupo `docker`, que equivale a root sobre el host: la separación protege de **accidentes**, no de un `deploy` hostil; lo que protege producción es que no hay bind mounts y el rebuild es explícito.
+
+- [ ] **Step 1: Traspaso de dueños y cierre de los `.env` (Gianclaudio, root; sin efecto en los contenedores)**
+
+```bash
+chown -R deploy:deploy /opt/cotizador-isthmus /home/maxmotors
+chmod 600 /opt/cotizador-isthmus/.env.production /opt/cotizador-isthmus/.env.local /home/maxmotors/app/.env.local
+git config --system --add safe.directory /opt/cotizador-isthmus
+git config --system --add safe.directory /home/maxmotors/app
+docker ps --format '{{.Names}} {{.Status}}' | grep -E 'cotizador|maxmotors'      # siguen Up, sin reinicio
+```
+
+- [ ] **Step 2: Verificar que `deploy` puede operar sin sudo**
+
+```bash
+sudo -u deploy git -C /opt/cotizador-isthmus status -sb | head -1               # ## master
+sudo -u deploy git -C /home/maxmotors/app status -sb | head -1
+sudo -u deploy docker compose -f /opt/cotizador-isthmus/docker-compose.yml config --quiet && echo "compose cotizador OK"
+sudo -u deploy docker compose -f /home/maxmotors/docker-compose.yml config --quiet && echo "compose maxmotors OK"
+```
+Expected: las cuatro líneas sin error (`config` lee los `.env` como `deploy`, prueba de que los 600 bastan).
+
+- [ ] **Step 3: Un despliegue real como `deploy`** — el siguiente brief del Cotizador o de Max Motors se despliega desde la sesión `deploy` con el procedimiento de siempre (tag `pre-<brief>` + `up -d --build`) y `sudo systemctl reload caddy` si hace falta (ya está en `MP_OPS`). Ese es el criterio de "deploy puede trabajar".
+
+- [ ] **Step 4: Fase 2 del drop-in (Gianclaudio, con sesión `deploy` abierta y `sudo -i` probado)**
+
+Añadir a `ops/ssh/00-hardening.conf` las líneas `PermitRootLogin no` y `AllowUsers deploy`; repetir Task 3 Steps 3–4 con expected `permitrootlogin no`, `allowusers deploy`, y desde la laptop `ssh root@5.78.214.136 hostname` → `Permission denied (publickey)`. Commit en tres órdenes.
+
+**Recomendado, fuera del alcance del Brief 01:** dar remoto privado en GitHub a los dos repos (hoy la única copia es el VPS más los Backups de Hetzner); limpiar los archivos `sha256:*` sueltos en `/opt/cotizador-isthmus` (parecen redirecciones accidentales de `docker build`/`docker images -q`).
 
 ---
 
@@ -1022,7 +1060,7 @@ systemctl list-timers mp-backup.timer --no-pager | head -2; cat /var/lib/mp-back
 docker compose config --quiet && echo compose-ok; ls -l /etc/mp-app; ls docs/design/capturas | wc -l
 git status --porcelain | grep -c '\.env$'; git status -sb | head -1
 ```
-Expected: `no`/`no`; Caddy `active`; jail `sshd`; `Status: active`; `1`; `HTTP/2 503` y `Let's Encrypt`; timer con próxima ejecución y fecha de hoy; `compose-ok`, dos `.env` 640, `13` capturas (2 preview + 1 placeholder ×2 + 10 pantallas → ajustar al conteo real); `0`; `## main...origin/main` sin `ahead`.
+Expected: `prohibit-password`/`no` tras la fase 1 (`no`/`no` tras la fase 2); Caddy `active`; jail `sshd`; `Status: active`; `1`; `HTTP/2 503` y `Let's Encrypt`; timer con próxima ejecución y fecha de hoy; `compose-ok`, dos `.env` 640, `13` capturas (2 preview + 1 placeholder ×2 + 10 pantallas → ajustar al conteo real); `0`; `## main...origin/main` sin `ahead`.
 
 - [ ] **Step 2: Commit final y push**
 

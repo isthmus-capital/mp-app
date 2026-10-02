@@ -4,7 +4,10 @@
 
 ## 1. Acceso
 
-- **SSH:** `ssh deploy@5.78.214.136` con la llave de Gianclaudio (`gianj@GLoPolito`). Tras el hardening (Task 3 del Brief 01) el login de `root` y la autenticación por contraseña están deshabilitados (`/etc/ssh/sshd_config.d/00-hardening.conf`, `AllowUsers deploy`).
+- **SSH:** `ssh deploy@5.78.214.136` con la llave de Gianclaudio (`gianj@GLoPolito`). Hardening en dos fases, drop-in `/etc/ssh/sshd_config.d/00-hardening.conf` (fuente: `ops/ssh/00-hardening.conf`; se lee antes que `50-cloud-init.conf` y gana):
+  - **Fase 1 (02-oct-2026):** `PasswordAuthentication no`, `KbdInteractiveAuthentication no`, `PermitRootLogin prohibit-password`, `MaxAuthTries 4`, `LoginGraceTime 30`, `X11Forwarding no`. Nadie entra con contraseña; `root` **sigue entrando por llave** porque Cotizador y Max Motors aún se operan como root.
+  - **Fase 2 (pendiente):** `PermitRootLogin no` + `AllowUsers deploy`, cuando `deploy` sea dueño y operador de `/opt/cotizador-isthmus` y `/home/maxmotors` (plan del Brief 01, Task 3b). Desde entonces root solo por `sudo -i` desde `deploy` o por consola Hetzner.
+  - Verificar lo vigente: `sudo sshd -T | grep -Ei '^(permitrootlogin|passwordauthentication|allowusers) '`.
 - **sudo:** `deploy` tiene la allowlist `MP_OPS` sin contraseña (reload/estado de Caddy, backups, journal, estados de ufw/fail2ban/iptables, `restic snapshots`) y sudo completo **con contraseña** para todo lo demás. La contraseña de `deploy` solo sirve para `sudo`, nunca para SSH; vive en el gestor de contraseñas de Gianclaudio. Claude Code (no interactivo) solo puede usar la allowlist.
 - **Recuperación si se pierde la llave:** Hetzner Cloud Console → servidor → *Console* (acceso como root por consola, no por SSH). Desde ahí: `nano /etc/ssh/sshd_config.d/00-hardening.conf` o añadir una llave a `/home/deploy/.ssh/authorized_keys`.
 - **Claude Code** corre como `deploy`; su configuración y la memoria del proyecto están en `/home/deploy/.claude` (copiadas de root el 02-oct-2026).
