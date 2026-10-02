@@ -9,7 +9,7 @@
 
 | # | Riesgo | Categoría | Prob. | Impacto | Nivel | Brief(s) | Estado hoy |
 |---|---|---|---|---|---|---|---|
-| R10 | Supabase en plan Free: pausa por inactividad y sin backups diarios | Operativo | Alta | Alto | **Crítico** | 01, 03 | **Bloqueante** para Brief 03 y producción (Pro previsto 03-oct-2026) |
+| R10 | Supabase en plan Free: pausa por inactividad y sin backups diarios | Operativo | Baja | Alto | Medio | 01, 03 | **Mitigado el 02-oct-2026**: Pro activo y `isthmus-mp` creado; queda verificar el primer backup (Checkpoint F) |
 | R11 | Repo sin remoto: un fallo del VPS pierde el código | Operativo | Baja | Alto | Bajo (residual) | 00, 01 | **Cerrado** 02-oct-2026: remoto privado GitHub, `main` sincronizado, push tras cada commit |
 | R08 | Desembolso accidental por pruebas contra BG LIVE | Financiero | Media | Alto | Alto | 00, 05, 12 | Política definida; controles técnicos pendientes |
 | R12 | Sesión de Claude Code con acceso a N8N que contiene BG LIVE | Seguridad | Media | Alto | Alto | 00, 12 | Mitigado parcialmente (allowlist de tools) |
@@ -113,6 +113,7 @@ Riesgos adicionales detectados durante el inventario: R13 a R22 (CRM/Sign) y **R
 - **Responsable.** Gianclaudio. **Estado:** **Bloqueante** para Brief 03 y para producción.
 
 - **Avance Brief 01 (02-oct-2026).** Backups diarios del VPS con restic (08:00 UTC, retención 14 días, cifrados) con restauración probada (volumen de prueba y Caddyfile). Destino local hasta el Storage Box (03-oct); n8n excluido hasta la primera corrida de Gianclaudio (D3). Supabase: pendiente Checkpoint F.
+- **02-oct-2026 (tarde).** Supabase Pro activado y proyecto `isthmus-mp` creado en us-west-2 (`waqvypbjicddmknwerip`, `ACTIVE_HEALTHY`, Prompt Maestro §19.8). El riesgo de pausa desaparece; los backups diarios del plan Pro se verifican en el panel (*Database → Backups*) cuando aparezca el primero (Checkpoint F). Nivel: Medio, mitigado. Restauración probada en staging sigue como criterio del Brief 03.
 
 ## R11 — Repo sin remoto: un fallo del VPS pierde el código
 - **Descripción.** Hasta el 02-oct-2026 `mp-app` vivía solo en `/opt/mp-app` del VPS (sin `git remote`). Un fallo de disco, un `rm` equivocado o la pérdida del servidor borraba el código y los documentos del proyecto.

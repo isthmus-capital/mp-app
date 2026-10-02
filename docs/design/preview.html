@@ -3,77 +3,97 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FIC · tokens de marca</title>
+<title>MP · tokens de marca</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../styles/tokens.css">
 <style>
   *{box-sizing:border-box}
-  body{margin:0;background:var(--fic-blanco);color:var(--fic-texto);font-family:var(--fic-font-sans);font-size:var(--fic-text-base);line-height:var(--fic-leading-normal);font-feature-settings:"tnum" 1}
-  header{background:var(--fic-azul);color:#fff;padding:14px 0}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
-  header .wrap{display:flex;align-items:center;gap:12px}
-  header img{height:40px;width:auto;background:#fff;border-radius:var(--fic-radius-sm);padding:4px 8px}
-  h1{font-size:var(--fic-text-lg);margin:0;font-weight:600}
-  h2{font-size:var(--fic-text-lg);color:var(--fic-azul);margin:32px 0 12px;font-weight:600}
-  .muted{color:var(--fic-gris-600);font-size:var(--fic-text-sm)}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-  @media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr)}}
-  .swatch{border:1px solid var(--fic-gris-200);border-radius:var(--fic-radius-md);overflow:hidden;background:#fff}
-  .swatch .c{height:56px}
-  .swatch .l{padding:8px 10px;font-size:var(--fic-text-xs);line-height:1.4}
-  .swatch code{font-family:var(--fic-font-mono);color:var(--fic-gris-600)}
+  body{margin:0;background:var(--mp-blanco);color:var(--mp-texto);font-family:var(--mp-font-sans);font-size:var(--mp-text-base);line-height:var(--mp-leading-normal);font-feature-settings:"tnum" 1}
+  header{background:var(--mp-azul);color:#fff;padding:14px 0}
+  .wrap{max-width:960px;margin:0 auto;padding:0 16px}
+  header .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header img{height:40px;width:auto;background:#fff;border-radius:var(--mp-radius-sm);padding:4px 8px}
+  h1{font-size:var(--mp-text-lg);margin:0;font-weight:600}
+  h2{font-size:var(--mp-text-lg);color:var(--mp-azul);margin:32px 0 12px;font-weight:600}
+  .muted{color:var(--mp-gris-600);font-size:var(--mp-text-sm)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .swatch{border:1px solid var(--mp-gris-200);border-radius:var(--mp-radius-md);overflow:hidden;background:#fff}
+  .swatch .c{height:64px}
+  .swatch .l{padding:8px 10px;font-size:var(--mp-text-xs);line-height:1.4}
+  .swatch code{font-family:var(--mp-font-mono);color:var(--mp-gris-600)}
   .type p{margin:6px 0}
-  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:var(--fic-touch-min);min-width:var(--fic-touch-min);padding:0 20px;border-radius:var(--fic-radius-md);font-weight:600;font-size:var(--fic-text-base);border:1px solid transparent;cursor:pointer;margin:4px 8px 4px 0;font-family:inherit}
-  .btn-primary{background:var(--fic-azul);color:#fff}
-  .btn-primary:hover{background:var(--fic-azul-900)}
-  .btn-secondary{background:#fff;color:var(--fic-azul);border-color:var(--fic-azul)}
-  .btn-ghost{background:var(--fic-gris-100);color:var(--fic-texto)}
-  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:var(--fic-text-sm);font-weight:600;background:var(--fic-gris-100);margin:4px 8px 4px 0}
-  .badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--b)}
-  .card{background:var(--fic-gris-100);border-radius:var(--fic-radius-lg);padding:16px;max-width:420px;box-shadow:var(--fic-shadow-sm)}
-  .card .amt{font-size:var(--fic-text-3xl);font-weight:700;color:var(--fic-azul);line-height:var(--fic-leading-tight)}
-  .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--fic-gris-200)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:var(--mp-touch-min);min-width:var(--mp-touch-min);padding:0 20px;border-radius:var(--mp-radius-md);font-weight:600;font-size:var(--mp-text-base);border:1px solid transparent;cursor:pointer;margin:4px 8px 4px 0;font-family:inherit}
+  .btn:focus-visible{outline:3px solid var(--mp-acento);outline-offset:2px}
+  .btn-primary{background:var(--mp-azul);color:#fff}
+  .btn-primary:hover{background:var(--mp-azul-900)}
+  .btn-secondary{background:#fff;color:var(--mp-azul);border-color:var(--mp-azul)}
+  .btn-ghost{background:var(--mp-gris-100);color:var(--mp-texto)}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:var(--mp-text-sm);font-weight:600;background:var(--mp-gris-100);margin:4px 8px 4px 0}
+  .badge::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--b)}
+  .card{background:var(--mp-gris-100);border-radius:var(--mp-radius-lg);padding:16px;max-width:420px;box-shadow:var(--mp-shadow-sm)}
+  .card .amt{font-size:var(--mp-text-3xl);font-weight:700;color:var(--mp-azul);line-height:var(--mp-leading-tight)}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--mp-gris-200)}
   .row:first-of-type{border-top:0}
-  .input{display:block;width:100%;max-width:420px;min-height:var(--fic-touch-min);border:1px solid var(--fic-gris-300);border-radius:var(--fic-radius-md);padding:0 12px;font:inherit;color:inherit;background:#fff}
-  footer{margin:40px 0 24px}
+  .input{display:block;width:100%;max-width:420px;min-height:var(--mp-touch-min);border:1px solid var(--mp-gris-400);border-radius:var(--mp-radius-md);padding:0 12px;font:inherit;color:inherit;background:#fff}
+  .logos{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .logos figure{margin:0;border:1px solid var(--mp-gris-200);border-radius:var(--mp-radius-md);padding:16px;background:#fff;max-width:320px}
+  .logos figure.oscuro{background:var(--mp-azul)}
+  .logos img{display:block;max-width:100%;height:auto}
+  .logos figcaption{margin-top:10px}
+  .logos .oscuro figcaption{color:#fff}
+  .iconos{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
+  .iconos img{border:1px solid var(--mp-gris-200);border-radius:18%}
+  .respaldo{margin:40px 0 24px;padding-top:14px;border-top:1px solid var(--mp-gris-200)}
 </style>
 </head>
 <body>
-<header><div class="wrap"><img src="../../public/brand/logo.png" alt="Isthmus Capital"><h1>Micropréstamos · tokens de marca</h1></div></header>
+<header><div class="wrap"><img src="../../public/brand/mp-logo.png" alt="MP Micropréstamos"><h1>Tokens de marca MP</h1></div></header>
 <main class="wrap">
-  <p class="muted">Página de prueba del Brief 00. Todos los datos son ficticios (Ejemplo). Tipografía propuesta: Manrope, sujeta a la sesión de diseño con Diego antes del Brief 02.</p>
+  <p class="muted">Página de prueba de los tokens (Brief 00, actualizada a la marca MP el 02-oct-2026). Todos los datos son ficticios (Ejemplo). Tipografía propuesta: Manrope, sujeta a la revisión en celular con Gianclaudio.</p>
 
-  <h2>Paleta de marca (§15)</h2>
-  <div class="grid">
-    <div class="swatch"><div class="c" style="background:var(--fic-azul)"></div><div class="l">--fic-azul<br><code>#193A76</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-azul-claro)"></div><div class="l">--fic-azul-claro<br><code>#66A5E6</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-azul-900)"></div><div class="l">--fic-azul-900<br><code>#0F2650</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-gris-100)"></div><div class="l">--fic-gris-100<br><code>#F4F6FA</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-gris-600)"></div><div class="l">--fic-gris-600<br><code>#5B6472</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-exito)"></div><div class="l">--fic-exito<br><code>#1F7A4D</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-alerta)"></div><div class="l">--fic-alerta<br><code>#B45309</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-error)"></div><div class="l">--fic-error<br><code>#B42318</code></div></div>
+  <h2>Logos</h2>
+  <div class="logos">
+    <figure><img src="../../public/brand/mp-logo.png" alt="MP Micropréstamos, Avanzamos Contigo"><figcaption class="muted">Marca del producto: <code>public/brand/mp-logo.png</code> (PNG con fondo transparente). Sobre blanco.</figcaption></figure>
+    <figure class="oscuro"><img src="../../public/brand/mp-logo.png" alt="" style="background:#fff;border-radius:6px;padding:8px 12px"><figcaption class="muted">Sobre el azul de marca va dentro de una caja blanca, como en la cabecera.</figcaption></figure>
+    <figure><img src="../../public/brand/logo.png" alt="Isthmus Capital" style="max-height:120px;width:auto"><figcaption class="muted">Respaldo: <code>public/brand/logo.png</code> (FIC). Solo en inicio de sesión, pie de página y documentos, con el texto "Un producto de Financiera Isthmus Capital".</figcaption></figure>
   </div>
 
-  <h2>Neutros derivados (propuesta)</h2>
+  <h2>Paleta de marca (medida del logo)</h2>
   <div class="grid">
-    <div class="swatch"><div class="c" style="background:var(--fic-blanco);border-bottom:1px solid var(--fic-gris-200)"></div><div class="l">--fic-blanco<br><code>#FFFFFF</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-gris-200)"></div><div class="l">--fic-gris-200 · bordes<br><code>#E3E8F0</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-gris-300)"></div><div class="l">--fic-gris-300 · inputs<br><code>#C9D2DF</code></div></div>
-    <div class="swatch"><div class="c" style="background:var(--fic-texto)"></div><div class="l">--fic-texto · texto principal<br><code>#16213A</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-azul)"></div><div class="l">--mp-azul · primario<br><code>#02265E</code> · 14.6:1</div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-azul-900)"></div><div class="l">--mp-azul-900 · pressed<br><code>#011A42</code> · 17.1:1</div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-azul-50)"></div><div class="l">--mp-azul-50 · tinte<br><code>#EAF0FA</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-acento)"></div><div class="l">--mp-acento · activo, foco<br><code>#1B70DE</code> · 4.75:1</div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-acento-700)"></div><div class="l">--mp-acento-700 · texto acento<br><code>#1457B3</code> · 6.9:1</div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-acento-100)"></div><div class="l">--mp-acento-100 · tinte acento<br><code>#DCEAFC</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-acento-claro)"></div><div class="l">--mp-acento-claro · sobre azul<br><code>#8DC0F7</code> · 7.6:1 sobre azul</div></div>
+  </div>
+
+  <h2>Semánticos y neutros</h2>
+  <div class="grid">
+    <div class="swatch"><div class="c" style="background:var(--mp-exito)"></div><div class="l">--mp-exito<br><code>#1F7A4D</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-alerta)"></div><div class="l">--mp-alerta<br><code>#B45309</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-error)"></div><div class="l">--mp-error<br><code>#B42318</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-blanco);border-bottom:1px solid var(--mp-gris-200)"></div><div class="l">--mp-blanco<br><code>#FFFFFF</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-gris-100)"></div><div class="l">--mp-gris-100 · fondo<br><code>#F4F6FA</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-gris-200)"></div><div class="l">--mp-gris-200 · bordes<br><code>#E3E8F0</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-gris-300)"></div><div class="l">--mp-gris-300 · decorativo<br><code>#C9D2DF</code></div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-gris-400)"></div><div class="l">--mp-gris-400 · inputs<br><code>#7F8A9C</code> · 3.5:1</div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-gris-600)"></div><div class="l">--mp-gris-600 · secundario<br><code>#5B6472</code> · 6.0:1</div></div>
+    <div class="swatch"><div class="c" style="background:var(--mp-texto)"></div><div class="l">--mp-texto · principal<br><code>#16213A</code> · 16.0:1</div></div>
   </div>
 
   <h2>Tipografía · Manrope</h2>
   <div class="type">
-    <p style="font-size:var(--fic-text-3xl);font-weight:700;line-height:var(--fic-leading-tight)">B/. 300.00 · 3xl 700</p>
-    <p style="font-size:var(--fic-text-2xl);font-weight:600;line-height:var(--fic-leading-tight)">Tu solicitud fue aprobada · 2xl 600</p>
-    <p style="font-size:var(--fic-text-xl);font-weight:600">Resumen de la solicitud · xl 600</p>
-    <p style="font-size:var(--fic-text-lg);font-weight:600">Cuota quincenal · lg 600</p>
+    <p style="font-size:var(--mp-text-3xl);font-weight:700;line-height:var(--mp-leading-tight)">B/. 300.00 · 3xl 700</p>
+    <p style="font-size:var(--mp-text-2xl);font-weight:600;line-height:var(--mp-leading-tight)">Tu solicitud fue aprobada · 2xl 600</p>
+    <p style="font-size:var(--mp-text-xl);font-weight:600">Resumen de la solicitud · xl 600</p>
+    <p style="font-size:var(--mp-text-lg);font-weight:600">Cuota quincenal · lg 600</p>
     <p>Texto base 400. Cifras tabulares: 1,234.56 y 9,876.54 alinean en columnas.</p>
-    <p class="muted">Texto secundario sm · --fic-gris-600</p>
-    <p style="font-size:var(--fic-text-xs)" class="muted">Pie legal xs · Financiera Isthmus Capital, Panamá.</p>
+    <p class="muted">Texto secundario sm · --mp-gris-600</p>
+    <p style="font-size:var(--mp-text-xs)" class="muted">Pie legal xs · Un producto de Financiera Isthmus Capital, Panamá.</p>
   </div>
 
   <h2>Botones e inputs</h2>
@@ -100,7 +120,16 @@
     <div class="row"><span>Estado</span><span class="badge" style="--b:var(--estado-current);margin:0">Current</span></div>
   </div>
 
-  <footer class="muted">Financiera Isthmus Capital · Brief 00 · 02-oct-2026 · Ejemplo</footer>
+  <h2>Íconos provisionales de la PWA</h2>
+  <div class="iconos">
+    <img src="../../public/icons/icon-192.png" width="96" height="96" alt="Ícono 192 px (recorte del logo)">
+    <img src="../../public/icons/icon-maskable-192.png" width="96" height="96" alt="Ícono maskable 192 px">
+    <img src="../../public/icons/apple-touch-icon.png" width="72" height="72" alt="Ícono de Apple 180 px">
+    <img src="../../public/favicon.ico" width="32" height="32" alt="Favicon 32 px">
+  </div>
+  <p class="muted">Recortados del PNG con <code>scripts/brand/make-icons.py</code>. Se reemplazan cuando llegue el SVG oficial.</p>
+
+  <footer class="respaldo muted">Un producto de Financiera Isthmus Capital · Brief 00/01 · 02-oct-2026 · Ejemplo</footer>
 </main>
 </body>
 </html>

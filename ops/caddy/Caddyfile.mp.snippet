@@ -22,7 +22,7 @@
 		handle @down {
 			header Retry-After "120"
 			root * /var/www/mp-placeholder
-			@logo path /logo.png
+			@logo path /logo.png /mp-logo.png
 			handle @logo {
 				file_server
 			}

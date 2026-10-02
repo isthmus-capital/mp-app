@@ -39,7 +39,7 @@ Antes de escribir código en cualquier brief:
 | VPS | Hetzner CPX31 `5.78.214.136`, Ubuntu, Docker Compose + Caddy | Hoy corre como root → **Brief 01 crea usuario no-root + hardening** |
 | Orquestación | N8N self-hosted `automation.isthmuscap.com` | Regla: `update_workflow` + `publish_workflow` siempre; verificar `activeVersionId` |
 | Apps existentes | Next.js 14 + TS: Cotizador (3001), Max Motors (3002) | La nueva app MP va en **puerto 3003**, mismo patrón Docker |
-| DB app | Supabase (nuevo proyecto `isthmus-mp`) | Postgres + Auth + RLS + Storage temporal |
+| DB app | Supabase **Pro**, proyecto `isthmus-mp` (ref `waqvypbjicddmknwerip`, us-west-2 Oregon junto al VPS, compute Micro, Postgres 17; creado el 02-oct-2026, §19.8) | Postgres + Auth + RLS + Storage temporal. RLS automática en tablas nuevas y **"expose new tables" desactivado**: cada tabla necesita `GRANT` explícito para `anon`/`authenticated` (§7) |
 | Expediente | Zoho CRM módulos `Afiliados`, `Solicitudes_Microprestamo` (+ `Contacts`) | Repositorio maestro del expediente |
 | Documentos | Zoho WorkDrive (Team Folder **General** → `Microprestamos/Afiliados/…`) | Flow solo accede al Team Folder "General" |
 | Firma | Zoho Sign (templates Contrato `561993000000057083`, Pagaré `…058038`, Carta `…058099`, APC `…058138`) | Webhook Sign → N8N |
@@ -441,28 +441,35 @@ Pendientes del Brief 04: verificar el token con el *Access Token Debugger* de Me
 
 ## 15. Identidad visual y proceso de diseño
 
-**Tokens de marca** (extraídos del logo oficial):
+**Marca del producto (decisión 02-oct-2026, §19.9): "MP Micropréstamos — Avanzamos Contigo"**, logo `public/brand/mp-logo.png` (PNG con fondo transparente). La app, la PWA, los correos y los PDF llevan la marca MP; **FIC aparece como respaldo** ("Un producto de Financiera Isthmus Capital", con su logo `public/brand/logo.png`) en inicio de sesión, pie de página y documentos. Los tokens anteriores `--fic-*` (`#193A76` / `#66A5E6`) quedan retirados; FIC no tiene tokens propios.
+
+**Tokens de marca** (medidos del logo real; valores completos y escalas en `styles/tokens.css`, auditoría en `docs/design/README.md`):
 
 ```css
 :root {
-  --fic-azul:        #193A76;  /* primario: encabezados, botones, texto de marca */
-  --fic-azul-claro:  #66A5E6;  /* secundario: acentos, estados activos, gráficos */
-  --fic-azul-900:    #0F2650;  /* hover/pressed */
-  --fic-gris-100:    #F4F6FA;  /* fondos de tarjeta */
-  --fic-gris-600:    #5B6472;  /* texto secundario */
-  --fic-exito:       #1F7A4D;
-  --fic-alerta:      #B45309;
-  --fic-error:       #B42318;
+  --mp-azul:         #02265E;  /* primario: cabeceras, botones, bloque de cifra, enlaces (14.6:1 sobre blanco) */
+  --mp-azul-900:     #011A42;  /* hover/pressed */
+  --mp-azul-50:      #EAF0FA;  /* tinte del primario: fila seleccionada */
+  --mp-acento:       #1B70DE;  /* acento: estado activo, foco, gráficos (4.75:1 sobre blanco; como texto solo sobre blanco) */
+  --mp-acento-700:   #1457B3;  /* acento como texto sobre fondos claros (6.9:1) */
+  --mp-acento-100:   #DCEAFC;  /* tinte del acento */
+  --mp-acento-claro: #8DC0F7;  /* acento sobre superficies azules (7.6:1 sobre azul) */
+  --mp-gris-100:     #F4F6FA;  /* fondo de página y tarjetas suaves */
+  --mp-gris-600:     #5B6472;  /* texto secundario */
+  --mp-texto:        #16213A;  /* texto principal */
+  --mp-exito:        #1F7A4D;
+  --mp-alerta:       #B45309;
+  --mp-error:        #B42318;
 }
 ```
 
-Tipografía: una sans geométrica sobria, sin fuentes decorativas. Sin gradientes, sin sombras marcadas, sin ilustraciones genéricas. Logo en cabecera de la app, en los PDFs y en el correo. Esquinas suaves, mucho espacio en blanco, un solo acento de color por pantalla.
+Tipografía: una sans geométrica sobria, sin fuentes decorativas. Sin gradientes, sin sombras marcadas, sin ilustraciones genéricas. Logo MP en cabecera de la app, en los PDFs y en el correo; respaldo FIC en pie y login. Esquinas suaves, mucho espacio en blanco, un solo acento de color por pantalla (el acento nunca sustituye al primario en botones ni enlaces). Íconos de la PWA provisionales recortados del PNG (`public/icons/`) hasta recibir el SVG oficial.
 
 **Estados del préstamo** (mismos colores que LoanDisk, para que FIC los reconozca): Current, Due Today, Missed Repayment, Arrears, Past Maturity.
 
 **Proceso:**
 1. **Antes del Brief 02** — sesión en Claude Design (1–2 h) sobre 5 pantallas clave: wizard del cliente (paso de monto), línea de tiempo de la solicitud, estado de cuenta, carga de Base Diaria con reporte de errores, bandeja de admin. Se itera con Diego en el canvas. **Decisión 02-oct-2026 (§19): la sesión se hace con Gianclaudio, no con Diego; las 5 pantallas se preparan en HTML con los tokens FIC al cierre del Brief 01 y se revisan en celular.**
-2. El resultado se congela como `docs/design/` + `styles/tokens.css` + configuración de Tailwind.
+2. El resultado se congela como `docs/design/` + `styles/tokens.css` + configuración de Tailwind. **02-oct-2026 (tarde):** las 5 pantallas, la página de tokens y la página de espera se regeneraron con la marca MP; Artifact privado actualizado para la revisión en celular.
 3. Cada brief de UI referencia la pantalla aprobada y usa el skill `frontend-design`.
 4. Cada brief de UI cierra con capturas de Playwright (móvil 390 px y escritorio 1440 px) comparadas contra el diseño.
 
@@ -529,3 +536,15 @@ La v1 (Creator → CRM → Sign → N8N → LoanDisk → BG) quedó funcionando 
 5. **Calidad de UI** (reglas en `CLAUDE.md`). Cada brief con pantallas cierra con: captura móvil 390 px y escritorio 1440 px por pantalla; `design:accessibility-review` antes de cerrar; textos revisados con `design:ux-copy` (ningún error técnico visible al usuario); flujo reanudable; prueba en celular real antes de aprobar el brief.
 6. **Remoto y ritmo de commits.** Repo privado `https://github.com/isthmus-capital/mp-app.git` (`origin`; `main` sincronizado el 02-oct-2026). Cada `git commit` va seguido de `git push` (R11 cerrado).
 7. **Calendario.** Supabase Pro se activa el 03-oct-2026. Si el Brief 01 necesita el proyecto `isthmus-mp` antes, ese paso queda pendiente y el brief sigue con el resto. Brief 01 aprobado para iniciar el 02-oct-2026.
+8. **Supabase Pro activado y proyecto creado (02-oct-2026, un día antes de lo previsto en el punto 7).** Organización `Isthmus Capital` en plan Pro; proyecto **`isthmus-mp`**, ref **`waqvypbjicddmknwerip`**, región **us-west-2 (Oregon, junto al VPS)**, compute Micro, Postgres 17, estado `ACTIVE_HEALTHY` (verificado por MCP), sin ramas. Configuración del panel: RLS automática en tablas nuevas **activada** y "expose new tables" **desactivado** (toda tabla necesita `GRANT` explícito, regla §7). Las claves **no viajan por chat**: Gianclaudio las copia del panel a `/etc/mp-app/staging.env` y `/etc/mp-app/production.env` (640 `root:deploy`) con estos nombres, iguales en los dos archivos:
+
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=https://waqvypbjicddmknwerip.supabase.co
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=   # Project Settings → API Keys → Publishable key (sb_publishable_…); pública por diseño
+   SUPABASE_URL=https://waqvypbjicddmknwerip.supabase.co
+   SUPABASE_SECRET_KEY=                    # API Keys → Secret keys → Create new key: una por ambiente ("mp-app-staging", "mp-app-production"), sb_secret_…; solo servidor
+   SUPABASE_PROJECT_REF=waqvypbjicddmknwerip
+   ```
+
+   Se usan las claves nuevas (publishable/secret), no las JWT `anon`/`service_role` heredadas (Supabase las retira a fin de 2026); la app nunca necesita la contraseña de Postgres ni el JWT secret (todo pasa por `supabase-js` y el MCP). **Hasta que el Brief 03 cree la rama persistente `staging`, los dos archivos apuntan al mismo proyecto**; entonces `staging.env` pasa a la URL y claves de la rama. Pendiente (Checkpoint F del Brief 01): verificar en el panel → *Database → Backups* que el primer backup diario del plan Pro aparece (24 h después de crear el proyecto).
+9. **Marca del producto: MP Micropréstamos.** La app usa la marca "MP Micropréstamos — Avanzamos Contigo" (`public/brand/mp-logo.png`, PNG con fondo transparente); FIC aparece como respaldo ("Un producto de Financiera Isthmus Capital") en inicio de sesión, pie de página y documentos. Colores medidos del logo: primario azul marino `#02265E` (14.6:1 sobre blanco) y acento azul medio `#1B70DE` (4.75:1), con escalas derivadas que cumplen AA (§15, `styles/tokens.css`); tokens y preset de Tailwind renombrados de `fic` a `mp` antes de que exista código que los use. Íconos PWA, maskable y favicon provisionales recortados del PNG hasta recibir el SVG. Las 5 pantallas, capturas 390/1440 y el Artifact se regeneraron con la nueva marca; sigue pendiente la revisión en celular.

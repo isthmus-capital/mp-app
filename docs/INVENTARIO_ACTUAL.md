@@ -18,7 +18,7 @@
 | 7. Deluge | Parcial | Reglas y comportamiento observado; código fuente pendiente (Gianclaudio pegará `mp_enviar_a_zoho_sign1`). |
 | 8. Zoho Sign | Completo | 4 templates leídos |
 | 9. Monday | Completo | El 06 prod no tiene nodos Monday: es un webhook compartido; Seguridad Unida lo llama desde `5wHL8Ut1ZT8SUZ2B` |
-| 10. Supabase | Completo | Proyecto `isthmus-mp` no existe |
+| 10. Supabase | Completo | **02-oct-2026:** Pro activo, proyecto `isthmus-mp` creado (`waqvypbjicddmknwerip`, us-west-2) |
 | 11. Accesos | Completo | Ver §11 |
 
 ### 0.1 Cambios v1 — bitácora de cambios en los workflows de la v1 durante el proyecto
@@ -482,8 +482,8 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 
 - Organización: `Isthmus Capital` (`dsokfwbgooixlpjflflv`).
 - Proyectos existentes: `isthmus-cotizador` (`aezbofbjcuwjwoanmscx`, us-east-1, PG 17) y `maxmotors-precios` (`ktdycqrkhccpycrsoszb`, us-east-1, PG 17).
-- Plan de la organización: **Free** (Gianclaudio, 02-oct-2026); el MCP no expone el plan. **Upgrade a Pro previsto para el 03-oct-2026.**
-- **`isthmus-mp` no existe.** Pendiente upgrade a Pro antes de crearlo (Brief 03). Ver `docs/RIESGOS.md` R10.
+- Plan de la organización: **Pro** desde el 02-oct-2026 (Gianclaudio; un día antes de lo previsto).
+- **`isthmus-mp` creado el 02-oct-2026 16:07 UTC**: ref `waqvypbjicddmknwerip`, región us-west-2 (Oregon, junto al VPS), compute Micro, Postgres 17.11, estado `ACTIVE_HEALTHY` (MCP `get_project`), sin ramas (`list_branches`). RLS automática activada y "expose new tables" desactivado (cada tabla necesita `GRANT` explícito). Variables de entorno y regla de claves en el Prompt Maestro §19.8; las claves las copia Gianclaudio del panel a `/etc/mp-app/*.env`. Pendiente: Checkpoint F (primer backup diario visible en el panel) y, en el Brief 03, la rama `staging`. R10 pasa de Crítico a mitigado.
 
 ## 11. Accesos
 
@@ -491,7 +491,7 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 |---|---|---|
 | SSH al VPS desde VS Code | OK | Esta sesión corre en `isthmus-n8n` (`5.78.214.136`) como `root`; Brief 01 crea `deploy`. **02-oct-2026:** `deploy` creado (grupo `docker`, sudoers `MP_OPS`, llave copiada, repo y configuración de Claude Code traspasados); Checkpoint A confirmado y **hardening de sshd fase 1 aplicado el 02-oct-2026 17:42 UTC** (`00-hardening.conf`: contraseñas y teclado interactivo fuera, root solo por llave, `MaxAuthTries 4`, `LoginGraceTime 30`, `X11Forwarding no`; verificado con `sshd -T` y pruebas externas). Fase 2 (`PermitRootLogin no` + `AllowUsers deploy`) pendiente de que `deploy` opere Cotizador y Max Motors (plan Task 3b). Contenedores activos: `cotizador-app` :3001, `maxmotors-app` :3002, `n8n-n8n-1` :5678, `n8n-postgres-1`, `gotenberg` :3000. Node 22.22.1, npm 9.2.0, Docker 29.7.2, Caddy, Python 3.14. |
 | DNS `mp.isthmuscap.com` | **Sin registro A** | `dig +short` vacío. Idem `staging-mp.` y `microprestamos.`. `automation.isthmuscap.com` → 5.78.214.136. Crear en el Brief 01. **02-oct:** se crean el 03-oct (Gisela recibe el código de GoDaddy); Caddy ya preparado en `ops/caddy/` y página de espera en `/var/www/mp-placeholder`. |
-| Supabase `isthmus-mp` | **Pendiente** (upgrade Pro) | §10 |
+| Supabase `isthmus-mp` | **OK** (02-oct-2026, Pro) | §10. Claves pendientes de copiar a `/etc/mp-app/*.env` (nombres en Prompt Maestro §19.8) |
 | Token WhatsApp en `.env` | OK | **02-oct-2026:** en `/etc/mp-app/staging.env` y `production.env` (640 `root:deploy`, Brief 01); antes `/opt/mp-app/.env` con permisos 600 (root); 5 claves `WHATSAPP_*`; `WHATSAPP_PHONE_NUMBER_ID = 1184886231372996`, `WHATSAPP_BUSINESS_ACCOUNT_ID = 4466216373701343`, `WHATSAPP_APP_ID = 1360854289567229`, `WHATSAPP_TEMPLATE_OTP = fic_mp_codigo_acceso` (coinciden con §14); `WHATSAPP_TOKEN` presente (no se imprime). Pendiente Brief 04: validar con el Access Token Debugger y planificar rotación. |
 | Credencial N8N `Meta WhatsApp MP` | **Sin confirmar** | Bloqueo del MCP n8n (sección 0). Gianclaudio la crea o confirma. |
 | Firewall de Docker | **OK** (02-oct-2026) | Regla `DOCKER-USER` bloquea 3000/3001/3002/5678 desde Internet; verificada desde 12 nodos externos (check-host.net); dominios HTTPS responden. Ver R37. |
@@ -499,13 +499,13 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 | fail2ban | **OK** (02-oct-2026) | Jail `sshd`, backend systemd, 5 intentos / 10 min → 1 h. |
 | Playwright en el VPS | **No soportado nativo** | Playwright 1.56 no soporta Ubuntu 26.04 (`npx playwright install chromium` falla) y el MCP de Playwright no encuentra Chrome. Brief 02: correr Playwright en Docker (`mcr.microsoft.com/playwright`). Las capturas del Brief 00 se hicieron con Gotenberg (`gotenberg/gotenberg:8`, v8.34.0, contenedor existente). |
 | Remoto git | **OK** (02-oct-2026) | `origin` = `https://github.com/isthmus-capital/mp-app.git` (privado), `main` sincronizado; regla en `CLAUDE.md`: cada commit va seguido de `git push`. R11 cerrado. |
-| Diseño: 5 pantallas | **Pendiente** (cierre del Brief 01) | Decisión 02-oct-2026 (§19): se preparan en HTML con los tokens FIC y se revisan con Gianclaudio en celular (no con Diego); ver `docs/design/README.md`. |
+| Diseño: 5 pantallas | **Hechas, pendiente revisión en celular** | Decisión 02-oct-2026 (§19): HTML con los tokens de marca, revisión con Gianclaudio en celular (no con Diego). **02-oct (tarde):** regeneradas con la marca **MP Micropréstamos** (logo `public/brand/mp-logo.png`, tokens `--mp-*` medidos del logo, FIC como respaldo); ver `docs/design/README.md`. |
 
 ## 12. Pendientes y bloqueantes
 
 **Bloqueantes**
 1. ~~MCP n8n re-autenticado~~ **Resuelto el 02-oct-2026**: sección 1 completada por MCP (05 v2, 06 QA/prod, credenciales; 03/04 en 1.2–1.3). **Criterio de aceptación 1 del Brief 00: cumplido** en IDs LoanDisk y payload BG; queda abierto solo el cronograma real de LoanDisk (no visible en N8N; se lee por API en el Brief 06).
-2. **Supabase Pro** antes del Brief 03 (previsto 03-oct-2026).
+2. ~~Supabase Pro antes del Brief 03~~ **Resuelto el 02-oct-2026**: Pro activo y proyecto `isthmus-mp` creado (§10). Queda: copiar claves a `/etc/mp-app/*.env` (Gianclaudio) y Checkpoint F (backups).
 3. ~~Remoto git o backup off-site antes del Brief 01~~ **Resuelto el 02-oct-2026**: `origin` privado en GitHub (`isthmus-capital/mp-app`), `main` sincronizado, push tras cada commit.
 
 **Pendientes (no bloquean el Brief 01/02)**
@@ -516,7 +516,7 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 8. Crear `Modo_Validacion` en CRM `Afiliados` y ampliar picklists `Cuotas`/`Monto_Solicitado` (Brief 05, cambios en CRM con aprobación).
 9. Crear DNS `mp.` y `staging-mp.` (Brief 01). **03-oct-2026** (Gisela recibe el código de GoDaddy); después: añadir `ops/caddy/Caddyfile.mp.snippet` a `/etc/caddy/Caddyfile`, `caddy validate`, `systemctl reload caddy`, verificar TLS y 503 con marca.
 10. Credencial N8N `Meta WhatsApp MP`: **no existe** (`list_credentials`); crearla con el token del `.env` (Gianclaudio) antes del Brief 04.
-11. Preparar las 5 pantallas en HTML con los tokens FIC al cierre del Brief 01 y revisarlas con Gianclaudio en celular (decisión 02-oct-2026, §19; no con Diego); congelar lo aprobado en `docs/design/` antes del Brief 02. **Hecho el 02-oct** (`docs/design/pantallas/`, capturas 390/1440 y Artifact privado); **pendiente la revisión en celular y la aprobación.**
+11. Preparar las 5 pantallas en HTML con los tokens de marca al cierre del Brief 01 y revisarlas con Gianclaudio en celular (decisión 02-oct-2026, §19; no con Diego); congelar lo aprobado en `docs/design/` antes del Brief 02. **Hecho el 02-oct** (`docs/design/pantallas/`, capturas 390/1440 y Artifact privado) y **regenerado la misma tarde con la marca MP** (§19.9: tokens `--mp-*`, íconos PWA provisionales, página de espera con marca MP); **pendiente la revisión en celular, la aprobación y el SVG oficial del logo.**
 12. Brief 02: Playwright en Docker (no hay soporte nativo de Chromium en Ubuntu 26.04).
 13. Validar en vivo el 03 KYC corregido (publicado el 02-oct-2026) con el próximo KYC real; anotar el resultado aquí.
 14. Diego: aprobar en Banca en Línea la transferencia BG código 18524 de SO-00079. **No existe 07 ni polling**: el estado final no llega a CRM; `Aprobaciones_BG` nunca se escribe. La app implementa `mp_bg_polling` (Brief 12).

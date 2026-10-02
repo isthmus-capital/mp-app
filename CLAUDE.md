@@ -2,7 +2,7 @@
 <!-- Paquete: v5 — 01-oct-2026 -->
 
 ## Qué es esto
-Plataforma de micropréstamos por descuento directo para **Financiera Isthmus Capital (FIC), Panamá**.
+Plataforma de micropréstamos por descuento directo para **Financiera Isthmus Capital (FIC), Panamá**. Marca del producto: **MP Micropréstamos — Avanzamos Contigo** (`public/brand/mp-logo.png`); FIC aparece como respaldo ("Un producto de Financiera Isthmus Capital") en login, pie y documentos.
 Tres portales en una sola app Next.js 14: `/cliente` (colaborador, PWA), `/afiliado` (RRHH de la empresa), `/admin` (FIC).
 Reemplaza el proceso actual de Zoho Creator + Zoho Flow + Monday, que corre en paralelo hasta el Brief 19.
 
@@ -80,7 +80,7 @@ supabase gen types typescript --project-id <id> > lib/db/types.ts
 - **Textos con `design:ux-copy`**: español de Panamá, formal y breve. Ningún error técnico visible al usuario (nada de stack traces, códigos HTTP, nombres de campos ni mensajes crudos de proveedor); siempre un mensaje claro con qué hacer a continuación.
 - **Flujo reanudable**: todo flujo de varios pasos guarda el avance por paso y se retoma con OTP desde el último paso incompleto (Prompt Maestro §19).
 - **Prueba en celular real** por Gianclaudio antes de aprobar cada brief de UI; no se cierra solo con capturas.
-- **Sesión de diseño**: con Gianclaudio, no con Diego. Las 5 pantallas clave se preparan en HTML con los tokens FIC (`styles/tokens.css`) al cierre del Brief 01 para revisarlas en celular; lo aprobado se congela en `docs/design/` antes del Brief 02.
+- **Sesión de diseño**: con Gianclaudio, no con Diego. Las 5 pantallas clave se preparan en HTML con los tokens de marca (`styles/tokens.css`) al cierre del Brief 01 para revisarlas en celular; lo aprobado se congela en `docs/design/` antes del Brief 02.
 
 ## Marca
-`--fic-azul #193A76` · `--fic-azul-claro #66A5E6`. Sobrio, sin gradientes. Detalle en §15 y §19 del Prompt Maestro.
+MP Micropréstamos: primario `--mp-azul #02265E`, acento `--mp-acento #1B70DE` (medidos del logo; escalas AA en `styles/tokens.css`, preset `mpPreset`). Logo FIC `public/brand/logo.png` solo como respaldo; no se toca. Sobrio, sin gradientes. Detalle en §15 y §19 del Prompt Maestro.

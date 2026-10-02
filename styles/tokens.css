@@ -1,48 +1,56 @@
-/* FIC — tokens de marca. Fuente: docs/00_PROMPT_MAESTRO.md §15.
-   Tipografía propuesta (Manrope) sujeta a la sesión de diseño con Gianclaudio (cierre del Brief 01, §19).
-   Estados del préstamo: nombres de LoanDisk, colores de la paleta FIC (mapeo estado → token). */
+/* MP Micropréstamos — tokens de marca. Fuente: docs/00_PROMPT_MAESTRO.md §15 (marca MP, 02-oct-2026).
+   Primario y acento extraídos del logo real (public/brand/mp-logo.png, mediana de cada grupo de píxeles).
+   FIC aparece solo como respaldo ("Un producto de Financiera Isthmus Capital") con su propio logo (public/brand/logo.png); no tiene tokens.
+   Tipografía propuesta (Manrope) sujeta a la revisión en celular con Gianclaudio (§19).
+   Estados del préstamo: nombres de LoanDisk, colores de la paleta MP (mapeo estado → token). */
 :root {
-  /* Marca (§15, literal) */
-  --fic-azul:        #193A76;  /* primario: encabezados, botones, texto de marca */
-  --fic-azul-claro:  #66A5E6;  /* secundario: acentos, estados activos, gráficos */
-  --fic-azul-900:    #0F2650;  /* hover/pressed */
-  --fic-gris-100:    #F4F6FA;  /* fondos de tarjeta */
-  --fic-gris-600:    #5B6472;  /* texto secundario */
-  --fic-exito:       #1F7A4D;
-  --fic-alerta:      #B45309;
-  --fic-error:       #B42318;
+  /* Marca MP (medida del logo) */
+  --mp-azul:         #02265E;  /* primario: cabeceras, botones, bloque de cifra, enlaces. 14.6:1 sobre blanco */
+  --mp-azul-900:     #011A42;  /* hover/pressed del primario. 17.1:1 sobre blanco */
+  --mp-azul-50:      #EAF0FA;  /* tinte del primario: fila seleccionada, fondos suaves. Texto 14.0:1 encima */
+  --mp-acento:       #1B70DE;  /* acento: estado activo, foco, gráficos. 4.75:1 sobre blanco (AA solo como texto sobre blanco); 3.1:1 sobre azul */
+  --mp-acento-700:   #1457B3;  /* acento como texto sobre cualquier fondo claro. 6.9:1 blanco, 6.4:1 gris-100 */
+  --mp-acento-100:   #DCEAFC;  /* tinte del acento: halo del paso actual, chips informativos. Texto 13.1:1 encima */
+  --mp-acento-claro: #8DC0F7;  /* acento sobre superficies azules (foco en la banda, gráficos sobre azul). 7.6:1 sobre azul; no usar sobre blanco */
 
-  /* Neutros derivados (propuesta Brief 00; no están en §15) */
-  --fic-blanco:      #FFFFFF;
-  --fic-gris-200:    #E3E8F0;  /* bordes, divisores */
-  --fic-gris-300:    #C9D2DF;  /* bordes de inputs */
-  --fic-gris-400:    #7F8A9C;  /* bordes de inputs y chips: 3.5:1 sobre blanco (WCAG 1.4.11; añadido en el Brief 01) */
-  --fic-texto:       #16213A;  /* texto principal */
+  /* Semánticos (sin cambio respecto a la paleta anterior) */
+  --mp-exito:        #1F7A4D;  /* 5.3:1 sobre blanco */
+  --mp-alerta:       #B45309;  /* 5.0:1 sobre blanco */
+  --mp-error:        #B42318;  /* 6.6:1 sobre blanco */
+
+  /* Neutros */
+  --mp-blanco:       #FFFFFF;
+  --mp-gris-100:     #F4F6FA;  /* fondo de página y tarjetas suaves */
+  --mp-gris-200:     #E3E8F0;  /* bordes, divisores */
+  --mp-gris-300:     #C9D2DF;  /* bordes decorativos */
+  --mp-gris-400:     #7F8A9C;  /* bordes de inputs y chips: 3.5:1 sobre blanco (WCAG 1.4.11) */
+  --mp-gris-600:     #5B6472;  /* texto secundario: 6.0:1 blanco, 5.5:1 gris-100, 5.2:1 azul-50 */
+  --mp-texto:        #16213A;  /* texto principal: 16.0:1 blanco, 14.8:1 gris-100 */
 
   /* Tipografía */
-  --fic-font-sans: var(--font-manrope, "Manrope"), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; /* --font-manrope la define next/font en Brief 02 */
-  --fic-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --fic-text-xs:   0.75rem;
-  --fic-text-sm:   0.875rem;
-  --fic-text-base: 1rem;
-  --fic-text-lg:   1.125rem;
-  --fic-text-xl:   1.375rem;
-  --fic-text-2xl:  1.75rem;
-  --fic-text-3xl:  2.25rem;
-  --fic-leading-tight:  1.2;
-  --fic-leading-normal: 1.5;
+  --mp-font-sans: var(--font-manrope, "Manrope"), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; /* --font-manrope la define next/font en Brief 02 */
+  --mp-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mp-text-xs:   0.75rem;
+  --mp-text-sm:   0.875rem;
+  --mp-text-base: 1rem;
+  --mp-text-lg:   1.125rem;
+  --mp-text-xl:   1.375rem;
+  --mp-text-2xl:  1.75rem;
+  --mp-text-3xl:  2.25rem;
+  --mp-leading-tight:  1.2;
+  --mp-leading-normal: 1.5;
 
   /* Forma */
-  --fic-radius-sm: 6px;
-  --fic-radius-md: 10px;
-  --fic-radius-lg: 16px;
-  --fic-shadow-sm: 0 1px 2px rgba(15, 38, 80, 0.06);  /* única sombra permitida (§15: sin sombras marcadas) */
-  --fic-touch-min: 44px;                               /* §9: tamaño de toque mínimo */
+  --mp-radius-sm: 6px;
+  --mp-radius-md: 10px;
+  --mp-radius-lg: 16px;
+  --mp-shadow-sm: 0 1px 2px rgba(2, 38, 94, 0.06);  /* única sombra permitida (§15: sin sombras marcadas) */
+  --mp-touch-min: 44px;                              /* §9: tamaño de toque mínimo */
 
-  /* Estados del préstamo (LoanDisk) → tokens FIC */
-  --estado-current:       var(--fic-exito);
-  --estado-due-today:     var(--fic-azul-claro);
-  --estado-missed:        var(--fic-alerta);
-  --estado-arrears:       var(--fic-error);
-  --estado-past-maturity: var(--fic-azul-900);
+  /* Estados del préstamo (LoanDisk) → tokens MP */
+  --estado-current:       var(--mp-exito);
+  --estado-due-today:     var(--mp-acento);
+  --estado-missed:        var(--mp-alerta);
+  --estado-arrears:       var(--mp-error);
+  --estado-past-maturity: var(--mp-azul-900);
 }
