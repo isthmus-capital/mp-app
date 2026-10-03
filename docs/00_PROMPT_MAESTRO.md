@@ -3,6 +3,7 @@
 
 > Uso: pegar este documento como `docs/00_PROMPT_MAESTRO.md` en el repo y referenciarlo desde `CLAUDE.md`. Claude Code debe leerlo completo antes del Brief 01.
 > Idioma del producto: español (Panamá). Idioma del código/commits: inglés.
+> **Versión 5.3 — 3 oct 2026:** decisiones de Diego del 02-oct en §19.10–19.13: historial de tasas por afiliado append-only (valor, vigencia, usuario, motivo), tasa congelada por préstamo al aprobarse, cambio solo por `admin` validado contra el rango del producto LoanDisk; productos configurables y versionados con catálogo fijo de pasos (esquema multi-producto desde el Brief 03, lanzamiento con un solo producto, pantalla de productos en el Brief 20); riesgos R41–R43; marca MP en §1, §4.1, §12 y Brief 02 (FIC solo como respaldo).
 > **Versión 5.2 — 2 oct 2026:** §19: la solicitud nace en `borrador` en el paso 1 del wizard y la sesión KYC se asocia a ella; wizard reanudable con OTP; IDAnalyzer redirige al formulario al aprobar (el WhatsApp con el enlace es respaldo); sesión de diseño con Gianclaudio (5 pantallas HTML con tokens FIC al cierre del Brief 01); reglas de calidad de UI; remoto GitHub privado con push tras cada commit.
 > **Versión 5.1 — 2 oct 2026:** §4.6-a: `total_pagar` = capital + interés flat; cuota redondeada a centavos con ajuste en la última cuota; alerta si LoanDisk difiere (decisión de Gianclaudio, Brief 00).
 > **Versión 5 — 1 oct 2026:** incorpora lo aprendido al poner en producción la v1 Zoho + N8N (§18): producto y ciclos de LoanDisk, sobre único de Sign, ambiente QA de BG, remitente de correos.
@@ -28,7 +29,7 @@ Antes de escribir código en cualquier brief:
 - **Producto:** micropréstamos a **colaboradores de empresas afiliadas** (Afiliados). El pago se hace por **descuento directo de planilla**; el Afiliado (RRHH) retiene y remite a FIC.
 - **Elegibilidad:** el solicitante debe existir en la **Base Master de Empleados** (alimentada por los archivos "Base Diaria" que sube cada Afiliado). Las condiciones de aprobación/rechazo (antigüedad ≥ 3 meses, descuentos actuales ≤ 50 % del salario bruto, capacidad de pago, validación de cuenta bancaria por banco, etc.) hoy viven en el formulario de Zoho Creator y son **independientes** del KYC de IDAnalyzer.
 - **Trazabilidad:** ya existe un **Número Único de Cliente** (NUC). Es la llave de todo: CRM, WorkDrive, Supabase, LoanDisk, BG, notificaciones. Nunca se crea un cliente sin NUC ni dos NUC para la misma cédula.
-- **Objetivo del rediseño:** que el cliente viva una experiencia **profesional, seria, con marca FIC** (app instalable en teléfono), con un proceso más fluido, un solo correo con los 4 documentos, y un back-office administrable — manteniendo **Zoho CRM como repositorio del expediente** de clientes y afiliados.
+- **Objetivo del rediseño:** que el cliente viva una experiencia **profesional, seria, con la marca MP Micropréstamos** (app instalable en teléfono; FIC como respaldo, §19.9), con un proceso más fluido, un solo correo con los 4 documentos, y un back-office administrable — manteniendo **Zoho CRM como repositorio del expediente** de clientes y afiliados.
 
 ---
 
@@ -85,7 +86,7 @@ Credenciales N8N a respetar: Zoho `V8ToVmg60xSjZasl` para workflows sin WorkDriv
 
 ### 4.1 Portal Cliente (`/cliente`) — PWA instalable
 
-Marca FIC (logo, paleta sobria, tipografía seria; sin gradientes llamativos). Manifest + service worker (`next-pwa`), "Agregar a pantalla de inicio" con instrucciones iOS/Android. Fase 2 opcional: Capacitor para tiendas.
+Marca MP Micropréstamos (`public/brand/mp-logo.png`, tokens `--mp-*`; paleta sobria, tipografía seria; sin gradientes llamativos; FIC como respaldo en inicio de sesión y pie, §15 y §19.9). Manifest + service worker (`next-pwa`), "Agregar a pantalla de inicio" con instrucciones iOS/Android. Fase 2 opcional: Capacitor para tiendas.
 
 **Onboarding / Solicitud (wizard de 6 pasos, guardado automático, reanudable con OTP — §19. La solicitud se crea en `borrador` en el paso 1 y todo lo demás, incluida la sesión KYC, cuelga de ella)**
 1. **Cédula** → lookup en Base Master → muestra empresa, fecha ingreso (enmascarado). Si no existe: mensaje "tu empresa aún no ha enviado tu registro" + botón "Avisar a mi RRHH" (envía correo al contacto del afiliado).
@@ -160,19 +161,19 @@ Requisito de Diego: todo lo que define el producto se cambia desde `/admin`, sin
 | Plazos permitidos (meses) | producto, sobrescribible por afiliado | 3, 6, 9, 12 — **solo 3 habilitado al inicio** | LoanDisk (`loan_duration`, nº de cuotas = meses × 2) |
 | Ciclos de planilla del afiliado | afiliado | `15-30`, `10-25` o **ambos** | Regla de inicio de descuento (§4.6) y esquema LoanDisk por ciclo (`15-30` → 4418; `10-25` → pendiente que Gisela lo cree) |
 | Montos ofrecidos | producto / afiliado | 100, 150, 200, 300 | Wizard (botones) + LoanDisk (`loan_principal_amount`) |
-| Tasa de interés | **afiliado** (obligatoria, puede cambiar; aplica a solicitudes nuevas) | la que coloca Diego en CRM `Taza_de_Interes` | Documentos (nominal = efectiva) y LoanDisk (`loan_interest`) |
+| Tasa de interés | **afiliado** (obligatoria, puede cambiar; aplica a solicitudes nuevas; historial append-only y congelada por préstamo al aprobarse, §19.10) | la que coloca Diego en CRM `Taza_de_Interes` | Documentos (nominal = efectiva) y LoanDisk (`loan_interest`, validada contra el rango del producto antes de guardar, §19.10) |
 | Método de interés | producto | Flat mensual (16 %/mes en el préstamo 16860) | LoanDisk |
 | % máximo de descuento | afiliado | 20 % (ANEXO A) | Motor de reglas |
 | Antigüedad mínima | producto / afiliado | 3 meses | Motor de reglas |
 | Modo de validación | afiliado | `base_diaria` / `declaracion_rrhh` | Wizard |
-| Comisión al afiliado | afiliado (`Tasa_de_Comisi_n`, puede cambiar) | 4 % del bruto desembolsado | Convenio (Anexo A) y liquidación mensual |
+| Comisión al afiliado | afiliado (`Tasa_de_Comisi_n`, puede cambiar; mismo historial append-only que la tasa, §19.10) | 4 % del bruto desembolsado | Convenio (Anexo A) y liquidación mensual |
 | FECI, comisión de cierre, timbres, seguro | producto | los del flujo vigente (Brief 00 los extrae) | LoanDisk (fees) |
 | SLA de desembolso, días de transferencia | afiliado | 24/48 h | Alertas y recordatorios |
 | Textos legales, plantillas de mensajes | global, versionados | T&C y APC actuales | Wizard, Sign, WhatsApp, email |
 
 Reglas de implementación:
-- Tablas `productos`, `parametros_afiliado`, `parametros_producto`, `parametros_hist` (quién, cuándo, antes/después, vigencia desde). Una solicitud **congela** los parámetros vigentes al enviarse (`evaluaciones.snapshot`); cambios posteriores no afectan préstamos ya otorgados.
-- La **tasa del afiliado** tiene una sola fuente: CRM `Afiliados.Taza_de_Interes`. N8N la espeja a Supabase al cambiar; la app nunca la escribe por su cuenta. El Brief 00 verifica cómo viaja hoy de Zoho a LoanDisk en el flujo vigente y se replica ese mismo camino.
+- Tablas `productos`, `parametros_afiliado`, `parametros_producto`, `parametros_hist` (quién, cuándo, antes/después, vigencia desde). Una solicitud **congela** los parámetros vigentes al enviarse (`evaluaciones.snapshot`); cambios posteriores no afectan préstamos ya otorgados. **Precisión 02-oct-2026 (§19.11):** `productos` nace multi-producto y versionado en el Brief 03 (el lanzamiento usa solo el producto MP, versión 1) y la solicitud congela también la versión del producto.
+- La **tasa del afiliado** tiene una sola fuente: CRM `Afiliados.Taza_de_Interes`. N8N la espeja a Supabase al cambiar; la app nunca la escribe por su cuenta. El Brief 00 verifica cómo viaja hoy de Zoho a LoanDisk en el flujo vigente y se replica ese mismo camino. **Precisión 02-oct-2026 (§19.10):** la tasa y la comisión llevan historial append-only por afiliado (valor, vigencia desde, usuario, motivo); solo `admin` las cambia, con validación contra el rango del producto LoanDisk antes de guardar; la dirección de la edición (desde `/admin` con write-back a CRM, o en CRM con espejo a Supabase) queda pendiente de confirmar con Diego (R42).
 - Los IDs de LoanDisk (producto, esquema de pago, desembolsado por) se guardan como parámetros de producto, no en el código.
 - El cálculo de la letra en `/api/quote` lee exclusivamente estos parámetros y se prueba contra el préstamo 16860 (300.00, 16 %/mes, quincenal, 5 cuotas, total 420.00).
 
@@ -374,8 +375,8 @@ Ritmo real con agentes + subagentes y decisiones resueltas en el día. Cada brie
 |---|---|---|
 | 00 | Risk assessment, `CLAUDE.md`, repo, sistema de diseño aprobado | manual |
 | 01 | Hardening VPS (usuario no-root, fail2ban, backups), DNS `mp.`, staging | manual |
-| 02 | Scaffold Next.js 14 PWA `mp-app` (puerto 3003), tokens de marca FIC, Caddy, Docker | auto |
-| 03 | Supabase `isthmus-mp`: esquema, RLS, RPC `transicionar_solicitud`, cadena de auditoría | manual |
+| 02 | Scaffold Next.js 14 PWA `mp-app` (puerto 3003), marca MP (`public/brand/mp-logo.png`, tokens `--mp-*`, `mpPreset`; FIC como respaldo, §19.9), Caddy, Docker | auto |
+| 03 | Supabase `isthmus-mp`: esquema **multi-producto y versionado** (§19.11) con historial de tasas por afiliado (§19.10), RLS, RPC `transicionar_solicitud`, cadena de auditoría | manual |
 | 04 | Auth: OTP WhatsApp + magic link, roles internos, `usuarios_afiliado` | manual |
 | 05 | Adaptadores (`kyc_provider`, signing, core, banking, messaging) + espejo CRM→Supabase de `Afiliados` | auto |
 | 06 | Motor de reglas: cuota quincenal 3/6/9/12, inicio de descuento por ciclo (uno o dos ciclos), % descuento — **tests primero** (§4.6) | manual |
@@ -386,7 +387,7 @@ Ritmo real con agentes + subagentes y decisiones resueltas en el día. Cada brie
 
 | # | Brief | Modo |
 |---|---|---|
-| 09 | Back-office: bandeja, expediente, aprobación, parámetros por afiliado (tasa, %, SLA, comisión 4 %) | auto |
+| 09 | Back-office: bandeja, expediente, aprobación, parámetros por afiliado (tasa y comisión con historial y validación de rango §19.10, %, SLA) y del producto existente (sin alta de productos, §19.11) | auto |
 | 10 | Paquete único de 4 documentos en Sign + firma RRHH + `mp_sign_events` | manual |
 | 11 | LoanDisk: crear borrower y préstamo (IDs tomados del flujo Monday vigente) | manual |
 | 12 | Desembolso BG H2H desde la app (firmante único Diego) + polling + notificación a Gisela | manual |
@@ -402,6 +403,12 @@ Ritmo real con agentes + subagentes y decisiones resueltas en el día. Cada brie
 | 17 | Cartas de saldo / paz y salvo con QR de verificación | manual |
 | 18 | Estado de cuenta mensual al afiliado (formato ANEXO), pago consolidado, conciliación y novedades laborales | manual |
 | 19 | Reconciliación CRM, digest diario, salud del sistema, runbooks, **apagar Creator y Flow** | manual |
+
+**Post-lanzamiento (no bloquea el piloto del Brief 14 ni el cierre del Brief 19)**
+
+| # | Brief | Modo |
+|---|---|---|
+| 20 | Catálogo de productos en `/admin` (§19.11): alta y versionado de productos; montos, plazos, frecuencia y rango de tasa; producto y ciclos LoanDisk; documentos requeridos; plantillas de firma; reglas de elegibilidad; niveles de aprobación por monto; pasos activables del catálogo fijo. Requiere los controles para montos altos definidos con Diego (R43) | manual |
 
 Fuera del loop de agentes (pedir el día 1): aprobación de la plantilla WhatsApp por Meta (1–3 días) y tiempos de respuesta de los sandbox de BG y Sign.
 
@@ -468,7 +475,7 @@ Tipografía: una sans geométrica sobria, sin fuentes decorativas. Sin gradiente
 **Estados del préstamo** (mismos colores que LoanDisk, para que FIC los reconozca): Current, Due Today, Missed Repayment, Arrears, Past Maturity.
 
 **Proceso:**
-1. **Antes del Brief 02** — sesión en Claude Design (1–2 h) sobre 5 pantallas clave: wizard del cliente (paso de monto), línea de tiempo de la solicitud, estado de cuenta, carga de Base Diaria con reporte de errores, bandeja de admin. Se itera con Diego en el canvas. **Decisión 02-oct-2026 (§19): la sesión se hace con Gianclaudio, no con Diego; las 5 pantallas se preparan en HTML con los tokens FIC al cierre del Brief 01 y se revisan en celular.**
+1. **Antes del Brief 02** — sesión en Claude Design (1–2 h) sobre 5 pantallas clave: wizard del cliente (paso de monto), línea de tiempo de la solicitud, estado de cuenta, carga de Base Diaria con reporte de errores, bandeja de admin. Se itera con Diego en el canvas. **Decisión 02-oct-2026 (§19): la sesión se hace con Gianclaudio, no con Diego; las 5 pantallas se preparan en HTML con los tokens de marca al cierre del Brief 01 (eran `--fic-*` esa mañana; renombrados a `--mp-*` el mismo día, §19.9) y se revisan en celular.**
 2. El resultado se congela como `docs/design/` + `styles/tokens.css` + configuración de Tailwind. **02-oct-2026 (tarde):** las 5 pantallas, la página de tokens y la página de espera se regeneraron con la marca MP; Artifact privado actualizado para la revisión en celular.
 3. Cada brief de UI referencia la pantalla aprobada y usa el skill `frontend-design`.
 4. Cada brief de UI cierra con capturas de Playwright (móvil 390 px y escritorio 1440 px) comparadas contra el diseño.
@@ -502,7 +509,7 @@ Tipografía: una sans geométrica sobria, sin fuentes decorativas. Sin gradiente
 La v1 (Creator → CRM → Sign → N8N → LoanDisk → BG) quedó funcionando de punta a punta con SO-00078. La app **replica estas soluciones, no las redescubre**:
 
 **LoanDisk**
-- Producto: **383523 "Micropago Flat 1025"** — Flat Rate (interés sobre el monto original, cuota constante), validado por Gisela. Rango de interés del producto min 18 / max 30; la tasa enviada es la del afiliado. Los productos 369108/369109 y 383112 **no** se usan.
+- Producto: **383523 "Micropago Flat 1025"** — Flat Rate (interés sobre el monto original, cuota constante), validado por Gisela. Rango de interés del producto min 18 / max 30; la tasa enviada es la del afiliado y **la app la valida contra ese rango antes de guardarla** (§19.10, R41); el rango se guarda como parámetro de producto y, si FIC necesita una tasa fuera de él, Gisela ajusta primero el producto en LoanDisk. Los productos 369108/369109 y 383112 **no** se usan.
 - Ciclos de pago a fechas fijas: **10-25 = 4646**, **15-30 = 4418**. Se elige por el ciclo del colaborador (§4.6-c). Pendiente: habilitar 15-30 en el producto 383523.
 - **Nunca usar el ciclo "Bimonthly" (ID 12)**: vía API genera cuotas cada 2 meses, no quincenales.
 - Los ciclos se crean en la UI de LoanDisk, no por API. Branch por afiliado lo asigna Gisela (AF-0033 → 92588).
@@ -532,7 +539,7 @@ La v1 (Creator → CRM → Sign → N8N → LoanDisk → BG) quedó funcionando 
 1. **Solicitud desde el paso 1.** La solicitud se crea en estado `borrador` en el primer paso del wizard (cédula) y todo lo que sigue cuelga de ella: la sesión KYC se asocia a esa solicitud (**nunca existe una sesión KYC sin solicitud**), igual que los datos, la aceptación de T&C y el envío. `mp_kyc_callback` recibe el identificador de la solicitud en el callback; la tolerancia al orden inverso (§18) queda solo como defensa (cola de KYC huérfanos visible en `/admin` + alerta).
 2. **Wizard reanudable con OTP.** El guardado es automático por paso; el cliente retoma el wizard autenticándose con OTP (canal de §13.6) y la app lo lleva al último paso incompleto. Sustituye el "reanudable por link mágico" de §4.1.
 3. **IDAnalyzer redirige al formulario.** Al aprobar la verificación, IDAnalyzer DocuPass redirige al cliente de vuelta al wizard. El WhatsApp con el enlace al formulario es un **respaldo**, no el camino principal; por eso el residual del 03 KYC v1 (WhatsApp al final de la rama, hasta 30 min tarde) baja a prioridad **Baja** (`docs/RIESGOS.md` R34).
-4. **Sesión de diseño con Gianclaudio.** Cambia el interlocutor de §13.13 y §15.1: las 5 pantallas clave se preparan en **HTML con los tokens FIC** (`styles/tokens.css`) al cierre del Brief 01 y se revisan con Gianclaudio en celular; Diego no participa en esa sesión. Lo aprobado se congela en `docs/design/` antes del Brief 02.
+4. **Sesión de diseño con Gianclaudio.** Cambia el interlocutor de §13.13 y §15.1: las 5 pantallas clave se preparan en **HTML con los tokens de marca** (`styles/tokens.css`; eran `--fic-*` esa mañana y pasaron a `--mp-*` el mismo día, §19.9) al cierre del Brief 01 y se revisan con Gianclaudio en celular; Diego no participa en esa sesión. Lo aprobado se congela en `docs/design/` antes del Brief 02.
 5. **Calidad de UI** (reglas en `CLAUDE.md`). Cada brief con pantallas cierra con: captura móvil 390 px y escritorio 1440 px por pantalla; `design:accessibility-review` antes de cerrar; textos revisados con `design:ux-copy` (ningún error técnico visible al usuario); flujo reanudable; prueba en celular real antes de aprobar el brief.
 6. **Remoto y ritmo de commits.** Repo privado `https://github.com/isthmus-capital/mp-app.git` (`origin`; `main` sincronizado el 02-oct-2026). Cada `git commit` va seguido de `git push` (R11 cerrado).
 7. **Calendario.** Supabase Pro se activa el 03-oct-2026. Si el Brief 01 necesita el proyecto `isthmus-mp` antes, ese paso queda pendiente y el brief sigue con el resto. Brief 01 aprobado para iniciar el 02-oct-2026.
@@ -550,3 +557,7 @@ La v1 (Creator → CRM → Sign → N8N → LoanDisk → BG) quedó funcionando 
 
    **Claves copiadas (02-oct-2026, 19:17–19:18 UTC)** por Gianclaudio a los dos archivos; Claude verificó permisos, nombres y formato sin ver los valores (INVENTARIO §10). La secret key `default` que Supabase crea con el proyecto no la usa ningún `.env` y se revoca cuando la app esté en producción (INVENTARIO §12, ítem 28).
 9. **Marca del producto: MP Micropréstamos.** La app usa la marca "MP Micropréstamos — Avanzamos Contigo" (`public/brand/mp-logo.png`, PNG con fondo transparente); FIC aparece como respaldo ("Un producto de Financiera Isthmus Capital") en inicio de sesión, pie de página y documentos. Colores medidos del logo: primario azul marino `#02265E` (14.6:1 sobre blanco) y acento azul medio `#1B70DE` (4.75:1), con escalas derivadas que cumplen AA (§15, `styles/tokens.css`); tokens y preset de Tailwind renombrados de `fic` a `mp` antes de que exista código que los use. Íconos PWA, maskable y favicon provisionales recortados del PNG hasta recibir el SVG. Las 5 pantallas, capturas 390/1440 y el Artifact se regeneraron con la nueva marca; sigue pendiente la revisión en celular.
+10. **Tasas por afiliado con historial (Diego, 02-oct-2026; documentado el 03-oct).** La tasa de interés y la de comisión de un afiliado pueden cambiar (p. ej. 24 % → 36 %). Cada afiliado lleva un **historial de tasas append-only** con valor, vigencia desde, usuario y motivo (tabla propia del Brief 03, distinta de `parametros_hist` y del historial de cargas de Base Diaria `base_cargas`, que se mantiene). Solo el rol `admin` puede cambiarla, con OTP en el momento y auditoría (§4.5). Antes de guardar, la app **valida la tasa contra el rango del producto LoanDisk** (hoy 383523: min 18 / max 30, §18), leído de los parámetros del producto, nunca fijo en código (R41). Cada solicitud/préstamo **congela la tasa vigente al aprobarse**; un cambio posterior nunca afecta préstamos existentes. Pendientes a cerrar con Diego: (a) §4.4 y §16.2 fijan la fuente única en CRM `Taza_de_Interes` y dicen que la app no la escribe; con esta decisión la edición pasa a `/admin` y lo natural es que N8N haga el write-back a CRM (CRM sigue siendo el expediente, §3). Confirmar esa dirección y cómo se tratan las ediciones hechas directamente en CRM durante la convivencia (R42). (b) §4.4 y §4.6-e congelan el snapshot **al enviarse** la solicitud (lo que el cliente vio y aceptó); si la tasa vigente cambia entre el envío y la aprobación, definir si se respeta la cotización aceptada o se recotiza con nueva aceptación de T&C. Hasta esa definición, el Brief 06 congela en el envío y **bloquea la aprobación con alerta** cuando la tasa vigente al aprobar difiere de la del snapshot; nunca se resuelve en silencio.
+11. **Productos configurables y versionados (Diego, 02-oct-2026; documentado el 03-oct).** La app debe poder crear productos nuevos desde `/admin` (p. ej. préstamos de hasta $10,000) sin tocar código. Cada producto define: montos (lista o rango), plazos, frecuencia, rango de tasa, producto y ciclos de LoanDisk, documentos requeridos (tipo, obligatorio, quién lo sube, validación), plantillas de firma, reglas de elegibilidad (p. ej. 20 % máximo de descuento) y niveles de aprobación por monto. Los productos son **versionados**: la solicitud congela la versión del producto junto con los parámetros (§4.4, §4.6-e). El flujo es un **catálogo fijo de pasos activables por producto** (KYC, validación Base Diaria, APC, comité, firma, desembolso), **no** un diseñador de flujos libre. El esquema de Supabase del **Brief 03 nace multi-producto**, con el producto MP actual como semilla (versión 1); **el lanzamiento va con un solo producto**. Los Briefs 06 (reglas), 09 (parámetros), 10 (firma) y 11 (LoanDisk) leen la configuración del producto en lugar de asumir el único existente, para que un producto nuevo no exija código. La **pantalla de administración de productos** (alta, versiones, documentos, plantillas, niveles de aprobación, pasos) queda en el **Brief 20, después del 19**, sin retrasar el lanzamiento; en el Brief 09 solo se editan los parámetros del producto existente. Los productos de monto alto pueden requerir controles adicionales (APC obligatorio, aprobación de Diego, límites de transferencia BG): **pendiente de definir con Diego** (R43) antes del Brief 20.
+12. **Riesgos nuevos en `docs/RIESGOS.md`:** R41 tasa fuera del rango del producto LoanDisk; R42 en la v1 editar `Taza_de_Interes` en CRM puede redisparar el contrato del afiliado; R43 controles adicionales para productos de monto alto (pendiente con Diego).
+13. **Marca MP en los briefs (03-oct-2026).** El Brief 02 (título, objetivo, PWA y criterio de aceptación) y la fila 02 de §12 dicen marca MP (logo `public/brand/mp-logo.png`, tokens `--mp-*`, `mpPreset`) con FIC como respaldo según §19.9; §1 y §4.1 corregidos igual. Las menciones a "tokens FIC" en el historial de versiones, §15.1 y §19.4 se conservan como registro con la nota del renombre; los planes de ejecución de los Briefs 00 y 01 llevan una nota al inicio y no se reescriben.

@@ -1,5 +1,7 @@
 # Brief 00 — Fundación: Implementation Plan
 
+> **Nota 03-oct-2026:** este plan se ejecutó con los tokens `--fic-*` y el preset `ficPreset`. El 02-oct-2026 se renombraron a `--mp-*` y `mpPreset` al adoptar la marca MP Micropréstamos con FIC como respaldo (Prompt Maestro §19.9). Se conserva sin reescribir como registro de lo ejecutado.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Dejar repo, riesgos, inventario del proceso v1 y sistema de diseño listos para que los Briefs 01+ solo construyan, sin modificar ningún sistema externo.

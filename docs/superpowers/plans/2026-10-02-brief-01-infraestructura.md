@@ -1,5 +1,7 @@
 # Brief 01 — Infraestructura y hardening del VPS: Implementation Plan
 
+> **Nota 03-oct-2026:** este plan se ejecutó con los tokens `--fic-*` y el preset `ficPreset`. El 02-oct-2026 se renombraron a `--mp-*` y `mpPreset` al adoptar la marca MP Micropréstamos con FIC como respaldo (Prompt Maestro §19.9). Se conserva sin reescribir como registro de lo ejecutado.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Dejar el VPS endurecido (usuario `deploy`, SSH sin root ni contraseñas, fail2ban, firewall real sobre Docker), con backups diarios cifrados y restauración probada, `staging-mp.isthmuscap.com` y `mp.isthmuscap.com` sirviendo por TLS con cabeceras de seguridad, el `docker-compose.yml` de `mp-app` con sus `.env` fuera del repo, la sonda de salud preparada, el runbook escrito y las 5 pantallas clave en HTML con tokens FIC listas para revisarlas en celular.
