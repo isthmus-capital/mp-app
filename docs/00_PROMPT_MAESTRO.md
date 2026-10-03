@@ -542,9 +542,11 @@ La v1 (Creator → CRM → Sign → N8N → LoanDisk → BG) quedó funcionando 
    NEXT_PUBLIC_SUPABASE_URL=https://waqvypbjicddmknwerip.supabase.co
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=   # Project Settings → API Keys → Publishable key (sb_publishable_…); pública por diseño
    SUPABASE_URL=https://waqvypbjicddmknwerip.supabase.co
-   SUPABASE_SECRET_KEY=                    # API Keys → Secret keys → Create new key: una por ambiente ("mp-app-staging", "mp-app-production"), sb_secret_…; solo servidor
+   SUPABASE_SECRET_KEY=                    # API Keys → Secret keys → Create new key: una por ambiente (mp_app_staging, mp_app_production; Supabase no acepta guiones), sb_secret_…; solo servidor
    SUPABASE_PROJECT_REF=waqvypbjicddmknwerip
    ```
 
    Se usan las claves nuevas (publishable/secret), no las JWT `anon`/`service_role` heredadas (Supabase las retira a fin de 2026); la app nunca necesita la contraseña de Postgres ni el JWT secret (todo pasa por `supabase-js` y el MCP). **Hasta que el Brief 03 cree la rama persistente `staging`, los dos archivos apuntan al mismo proyecto**; entonces `staging.env` pasa a la URL y claves de la rama. Pendiente (Checkpoint F del Brief 01): verificar en el panel → *Database → Backups* que el primer backup diario del plan Pro aparece (24 h después de crear el proyecto).
+
+   **Claves copiadas (02-oct-2026, 19:17–19:18 UTC)** por Gianclaudio a los dos archivos; Claude verificó permisos, nombres y formato sin ver los valores (INVENTARIO §10). La secret key `default` que Supabase crea con el proyecto no la usa ningún `.env` y se revoca cuando la app esté en producción (INVENTARIO §12, ítem 28).
 9. **Marca del producto: MP Micropréstamos.** La app usa la marca "MP Micropréstamos — Avanzamos Contigo" (`public/brand/mp-logo.png`, PNG con fondo transparente); FIC aparece como respaldo ("Un producto de Financiera Isthmus Capital") en inicio de sesión, pie de página y documentos. Colores medidos del logo: primario azul marino `#02265E` (14.6:1 sobre blanco) y acento azul medio `#1B70DE` (4.75:1), con escalas derivadas que cumplen AA (§15, `styles/tokens.css`); tokens y preset de Tailwind renombrados de `fic` a `mp` antes de que exista código que los use. Íconos PWA, maskable y favicon provisionales recortados del PNG hasta recibir el SVG. Las 5 pantallas, capturas 390/1440 y el Artifact se regeneraron con la nueva marca; sigue pendiente la revisión en celular.

@@ -483,7 +483,14 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 - Organización: `Isthmus Capital` (`dsokfwbgooixlpjflflv`).
 - Proyectos existentes: `isthmus-cotizador` (`aezbofbjcuwjwoanmscx`, us-east-1, PG 17) y `maxmotors-precios` (`ktdycqrkhccpycrsoszb`, us-east-1, PG 17).
 - Plan de la organización: **Pro** desde el 02-oct-2026 (Gianclaudio; un día antes de lo previsto).
-- **`isthmus-mp` creado el 02-oct-2026 16:07 UTC**: ref `waqvypbjicddmknwerip`, región us-west-2 (Oregon, junto al VPS), compute Micro, Postgres 17.11, estado `ACTIVE_HEALTHY` (MCP `get_project`), sin ramas (`list_branches`). RLS automática activada y "expose new tables" desactivado (cada tabla necesita `GRANT` explícito). Variables de entorno y regla de claves en el Prompt Maestro §19.8; las claves las copia Gianclaudio del panel a `/etc/mp-app/*.env`. Pendiente: Checkpoint F (primer backup diario visible en el panel) y, en el Brief 03, la rama `staging`. R10 pasa de Crítico a mitigado.
+- **`isthmus-mp` creado el 02-oct-2026 16:07 UTC**: ref `waqvypbjicddmknwerip`, región us-west-2 (Oregon, junto al VPS), compute Micro, Postgres 17.11, estado `ACTIVE_HEALTHY` (MCP `get_project`), sin ramas (`list_branches`). RLS automática activada y "expose new tables" desactivado (cada tabla necesita `GRANT` explícito). Variables de entorno y regla de claves en el Prompt Maestro §19.8. Pendiente: Checkpoint F (primer backup diario visible en el panel) y, en el Brief 03, la rama `staging`. R10 pasa de Crítico a mitigado.
+- **Claves en el VPS.** Gianclaudio las copió del panel el 02-oct-2026 entre 19:17 y 19:18 UTC (fecha de modificación de los archivos). Claude verificó el 03-oct-2026 00:22 UTC, en solo lectura y sin mostrar valores:
+  - `/etc/mp-app/staging.env` y `/etc/mp-app/production.env`: modo 640, dueño `root:deploy`; carpeta `/etc/mp-app` 750 `root:deploy`, sin otros archivos.
+  - Cada archivo tiene 14 variables: las 9 del Brief 01 y las 5 de Prompt Maestro §19.8 (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_PROJECT_REF`). Ninguna vacía; sin líneas mal formadas, retornos de carro, espacios finales, comillas ni duplicados.
+  - URL y ref coinciden con `waqvypbjicddmknwerip`. La publishable tiene formato `sb_publishable_` y es la misma en los dos archivos. Cada secret tiene formato `sb_secret_`, son distintas entre ambientes (Gianclaudio también comparó sus huellas sha256) y ninguna variable `NEXT_PUBLIC_*` contiene una clave secreta.
+  - Secret keys creadas en el panel, una por ambiente: `mp_app_staging` y `mp_app_production` (Supabase no acepta guiones en el nombre).
+  - La secret key `default` que Supabase creó con el proyecto sigue activa y ningún `.env` la usa: **pendiente revocarla cuando la app esté en producción** (§12, ítem 28).
+  - Nota para el Brief 02: Next.js incrusta las variables `NEXT_PUBLIC_*` en el build y el `env_file` de compose solo llega en ejecución. El Dockerfile debe recibirlas como build args, o la app debe leerlas en el servidor y pasarlas al cliente.
 
 ## 11. Accesos
 
@@ -491,7 +498,7 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 |---|---|---|
 | SSH al VPS desde VS Code | OK | Esta sesión corre en `isthmus-n8n` (`5.78.214.136`) como `root`; Brief 01 crea `deploy`. **02-oct-2026:** `deploy` creado (grupo `docker`, sudoers `MP_OPS`, llave copiada, repo y configuración de Claude Code traspasados); Checkpoint A confirmado y **hardening de sshd fase 1 aplicado el 02-oct-2026 17:42 UTC** (`00-hardening.conf`: contraseñas y teclado interactivo fuera, root solo por llave, `MaxAuthTries 4`, `LoginGraceTime 30`, `X11Forwarding no`; verificado con `sshd -T` y pruebas externas). Fase 2 (`PermitRootLogin no` + `AllowUsers deploy`) pendiente de que `deploy` opere Cotizador y Max Motors (plan Task 3b). Contenedores activos: `cotizador-app` :3001, `maxmotors-app` :3002, `n8n-n8n-1` :5678, `n8n-postgres-1`, `gotenberg` :3000. Node 22.22.1, npm 9.2.0, Docker 29.7.2, Caddy, Python 3.14. |
 | DNS `mp.isthmuscap.com` | **Sin registro A** | `dig +short` vacío. Idem `staging-mp.` y `microprestamos.`. `automation.isthmuscap.com` → 5.78.214.136. Crear en el Brief 01. **02-oct:** se crean el 03-oct (Gisela recibe el código de GoDaddy); Caddy ya preparado en `ops/caddy/` y página de espera en `/var/www/mp-placeholder`. |
-| Supabase `isthmus-mp` | **OK** (02-oct-2026, Pro) | §10. Claves pendientes de copiar a `/etc/mp-app/*.env` (nombres en Prompt Maestro §19.8) |
+| Supabase `isthmus-mp` | **OK** (02-oct-2026, Pro) | §10. Claves en `/etc/mp-app/staging.env` y `production.env` desde el 02-oct-2026 (5 variables de Prompt Maestro §19.8); 640 `root:deploy` verificado el 03-oct-2026 |
 | Token WhatsApp en `.env` | OK | **02-oct-2026:** en `/etc/mp-app/staging.env` y `production.env` (640 `root:deploy`, Brief 01); antes `/opt/mp-app/.env` con permisos 600 (root); 5 claves `WHATSAPP_*`; `WHATSAPP_PHONE_NUMBER_ID = 1184886231372996`, `WHATSAPP_BUSINESS_ACCOUNT_ID = 4466216373701343`, `WHATSAPP_APP_ID = 1360854289567229`, `WHATSAPP_TEMPLATE_OTP = fic_mp_codigo_acceso` (coinciden con §14); `WHATSAPP_TOKEN` presente (no se imprime). Pendiente Brief 04: validar con el Access Token Debugger y planificar rotación. |
 | Credencial N8N `Meta WhatsApp MP` | **Sin confirmar** | Bloqueo del MCP n8n (sección 0). Gianclaudio la crea o confirma. |
 | Firewall de Docker | **OK** (02-oct-2026) | Regla `DOCKER-USER` bloquea 3000/3001/3002/5678 desde Internet; verificada desde 12 nodos externos (check-host.net); dominios HTTPS responden. Ver R37. |
@@ -505,7 +512,7 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 
 **Bloqueantes**
 1. ~~MCP n8n re-autenticado~~ **Resuelto el 02-oct-2026**: sección 1 completada por MCP (05 v2, 06 QA/prod, credenciales; 03/04 en 1.2–1.3). **Criterio de aceptación 1 del Brief 00: cumplido** en IDs LoanDisk y payload BG; queda abierto solo el cronograma real de LoanDisk (no visible en N8N; se lee por API en el Brief 06).
-2. ~~Supabase Pro antes del Brief 03~~ **Resuelto el 02-oct-2026**: Pro activo y proyecto `isthmus-mp` creado (§10). Queda: copiar claves a `/etc/mp-app/*.env` (Gianclaudio) y Checkpoint F (backups).
+2. ~~Supabase Pro antes del Brief 03~~ **Resuelto el 02-oct-2026**: Pro activo y proyecto `isthmus-mp` creado (§10); claves copiadas a `/etc/mp-app/*.env` y verificadas (§10). Queda: Checkpoint F (backups).
 3. ~~Remoto git o backup off-site antes del Brief 01~~ **Resuelto el 02-oct-2026**: `origin` privado en GitHub (`isthmus-capital/mp-app`), `main` sincronizado, push tras cada commit.
 
 **Pendientes (no bloquean el Brief 01/02)**
@@ -533,4 +540,5 @@ Las fórmulas de Monday (`Letra Quincenal` 27.53/55.06/282.59 y `Letra Mensual` 
 25. **Primera corrida completa del backup con n8n** la ejecuta Gianclaudio (`sudo MP_BACKUP_INCLUDE_N8N_OVERRIDE=1 /usr/local/bin/mp-backup.sh`) y luego pone `MP_BACKUP_INCLUDE_N8N=1`.
 26. **Ventana de mantenimiento del fin de semana (Gianclaudio)**, checklist único `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md`: dump previo → rotación de Postgres de n8n → apt upgrade (incluye docker-ce) → reinicio de kernel → post-reboot → verificación externa de puertos (check-host.net) → verificación HTTPS de n8n, Cotizador y Max Motors.
 27. Brief 02: activar `mp-healthcheck.timer` cuando exista `/api/health`.
+28. **Revocar la secret key `default` de Supabase** (panel → Project Settings → API Keys → Secret keys) cuando la app esté en producción (piloto del Brief 14, Prompt Maestro §12). Ningún `.env` la usa; la app usa `mp_app_staging` y `mp_app_production` (§10). Si N8N necesita una secret (Briefs 05 y 08), se le crea una propia en vez de usar `default`.
 
