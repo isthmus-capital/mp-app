@@ -48,6 +48,7 @@ cat /var/run/reboot-required.pkgs
 ```
 
 - [ ] `post-upgrade` con `rc=0` y 5 contenedores `Up`; `DOCKER-USER` en `1`; sin paquetes pendientes.
+- [ ] **Kernel nuevo retenido** (`linux-image-virtual` en `apt list --upgradable`, como el `7.0.0-38` de R45): `apt-get upgrade` no lo instala porque requiere un paquete nuevo. Instalarlo antes del paso 3 con `apt-get -y install linux-image-virtual` y comprobar que aparece en `/var/run/reboot-required.pkgs`.
 - [ ] Si la regla `DOCKER-USER` no está: `iptables -I DOCKER-USER 1 -i eth0 -p tcp -m conntrack --ctstate NEW -m multiport --dports 3000,3001,3002,5678 -j DROP`. **Nunca `ufw reload` con contenedores arriba.**
 - [ ] Si un contenedor no volvió: `docker start <nombre>`; n8n: `docker compose -f /opt/n8n/docker-compose.yml up -d`.
 
@@ -116,5 +117,5 @@ Anota en `docs/INVENTARIO_ACTUAL.md` §0.1 (bitácora v1): fecha, "actualizació
 | Caddy no responde en 443 | `systemctl status caddy`; `journalctl -u caddy -n 50`; `systemctl restart caddy`. |
 | Un sitio da 502 | El contenedor detrás aún arranca; repetir `check-services.sh` en 1 min. |
 | No entra por SSH | Consola Hetzner (Cloud Console → *Console*) con root; revisar `systemctl status ssh` y `/etc/ssh/sshd_config.d/`. |
-| El kernel nuevo no arranca | El anterior sigue instalado: en GRUB (consola Hetzner) elegir `7.0.0-31`. |
+| El kernel nuevo no arranca | El anterior sigue instalado: en GRUB (consola Hetzner) elegir el que corría antes de la ventana (al 03-oct-2026, `7.0.0-34`; verificar con `uname -r` en el pre-chequeo). |
 | Daño que no se arregla con lo anterior | Restaurar el backup del servidor desde el panel de Hetzner (Backups) es el último recurso: revierte **todo** el disco al punto del backup. |

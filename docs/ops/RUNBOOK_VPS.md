@@ -10,7 +10,7 @@
   - Verificar lo vigente: `sudo sshd -T | grep -Ei '^(permitrootlogin|passwordauthentication|allowusers) '`.
 - **sudo:** `deploy` tiene la allowlist `MP_OPS` sin contraseña (reload/estado de Caddy, backups, journal, estados de ufw/fail2ban/iptables, `restic snapshots`) y sudo completo **con contraseña** para todo lo demás. La contraseña de `deploy` solo sirve para `sudo`, nunca para SSH; vive en el gestor de contraseñas de Gianclaudio. Claude Code (no interactivo) solo puede usar la allowlist.
 - **Recuperación si se pierde la llave:** Hetzner Cloud Console → servidor → *Console* (acceso como root por consola, no por SSH). Desde ahí: `nano /etc/ssh/sshd_config.d/00-hardening.conf` o añadir una llave a `/home/deploy/.ssh/authorized_keys`.
-- **Claude Code** corre como `deploy`; su configuración y la memoria del proyecto están en `/home/deploy/.claude` (copiadas de root el 02-oct-2026).
+- **Claude Code** corre hoy como **`root`** (`HOME=/root`): su configuración y la memoria vigentes están en `/root/.claude`. La copia en `/home/deploy/.claude` es del 02-oct-2026 y está desactualizada. Mientras corra como root, la allowlist `MP_OPS` no lo limita; el control son las reglas de `.claude/settings.json`, el clasificador y CLAUDE.md. Pasar la sesión a `deploy` (o dejarla en root) es decisión pendiente de Gianclaudio (INVENTARIO §13).
 
 ## 2. Servicios
 
@@ -43,7 +43,7 @@ Secretos: `/etc/mp-app/staging.env` y `/etc/mp-app/production.env` (640 `root:de
 
 1. Respaldar antes: `sudo cp -a /etc/caddy/Caddyfile /root/backups/Caddyfile.$(date -u +%Y%m%dT%H%M%SZ)`. Editar `/etc/caddy/Caddyfile` (`sudo nano`). El bloque de mp-app es `ops/caddy/Caddyfile.mp.snippet` del repo, **aplicado el 03-oct-2026 (v3)**; el bloque del servidor y el snippet del repo deben ser idénticos: `awk '/^# ===== mp-app/{f=1} f' /etc/caddy/Caddyfile | diff - ops/caddy/Caddyfile.mp.snippet`.
 2. Los archivos de log del bloque deben pertenecer a `caddy`: `sudo chown caddy:caddy /var/log/caddy/mp.log /var/log/caddy/staging-mp.log`. Un `caddy validate` ejecutado como root los crea como `root:root 600` y la recarga falla con *permission denied* (ocurrió el 03-oct-2026; la reversa automática restauró el Caddyfile sin corte).
-3. `sudo caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile`
+3. `sudo caddy validate --config /etc/caddy/Caddyfile` (Caddy detecta el adaptador por el nombre del archivo; así coincide exacto con la allowlist `MP_OPS`). Después repetir el `chown caddy:caddy` del punto 2.
 4. `sudo systemctl reload caddy` (sin corte). Reversa: `sudo cp -a /root/backups/Caddyfile.<respaldo> /etc/caddy/Caddyfile && sudo systemctl reload caddy`, luego `scripts/ops/check-services.sh`.
 5. Logs: `/var/log/caddy/staging-mp.log`, `/var/log/caddy/mp.log`, `sudo journalctl -u caddy -n 50`.
 
@@ -64,7 +64,7 @@ Página de espera (503 con marca) en `/var/www/mp-placeholder/` (fuente: `ops/ca
 - **Cuándo:** `mp-backup.timer` diario 08:00 UTC (03:00 Panamá). Retención 14 días (`--keep-daily 14`). Cifrado y deduplicado por restic.
 - **Dónde:** `RESTIC_REPOSITORY` en `/etc/mp-backup/restic.env` (600 root). Es local (`/var/backups/restic-local`). El Storage Box de Hetzner queda **aplazado sin fecha** (03-oct-2026): los Backups de Hetzner cubren la pérdida del servidor. Si algún día se contrata, se cambia a `sftp:uXXXXXX@uXXXXXX.your-storagebox.de:/restic-isthmus`, se añade a `/root/.ssh/config` un bloque `Host uXXXXXX.your-storagebox.de` / `Port 23` / `IdentityFile /root/.ssh/id_ed25519_storagebox`, y se corre `restic init` una vez. La llave pública está en `/root/.ssh/id_ed25519_storagebox.pub`.
 - **Contraseña del repositorio:** `RESTIC_PASSWORD` en `restic.env`; copia en el gestor de contraseñas de Gianclaudio (`sudo grep RESTIC_PASSWORD /etc/mp-backup/restic.env`). Sin ella los backups son irrecuperables.
-- **n8n (decisión D3):** `MP_BACKUP_INCLUDE_N8N` empieza en `0`. Gianclaudio ejecuta la primera corrida completa con `sudo MP_BACKUP_INCLUDE_N8N_OVERRIDE=1 /usr/local/bin/mp-backup.sh`, prueba la restauración de n8n (abajo) y después pone `MP_BACKUP_INCLUDE_N8N=1` en `restic.env`. Claude Code no ejecuta ni inspecciona esa parte.
+- **n8n (decisión D3):** `MP_BACKUP_INCLUDE_N8N` empieza en `0`. Gianclaudio ejecuta la primera corrida completa con `sudo MP_BACKUP_INCLUDE_N8N_OVERRIDE=1 /usr/local/bin/mp-backup.sh` (como root o con la contraseña de sudo de `deploy`: la allowlist `MP_OPS` no admite variables de entorno), prueba la restauración de n8n (abajo) y después pone `MP_BACKUP_INCLUDE_N8N=1` en `restic.env`. Claude Code no ejecuta ni inspecciona esa parte.
 
 Comandos (como `deploy`, con `sudo`):
 
@@ -80,7 +80,7 @@ sudo /usr/local/bin/mp-restore-test.sh                    # prueba mensual: volu
 
 Restaurar un volumen: restaurar `vol-<nombre>.tgz` del snapshot a `/tmp/r`, parar el contenedor, `docker run --rm -v <vol>:/data -v /tmp/r/var/backups/mp-stage:/src:ro alpine:3.20 sh -c 'rm -rf /data/* && tar xzf /src/vol-<nombre>.tgz -C /data'`, arrancar el contenedor.
 Restaurar n8n (**Gianclaudio**): restaurar `n8n-pg_dumpall.sql.gz` del snapshot, `gunzip -c ... | docker exec -i n8n-postgres-1 psql -U n8n -d postgres`, y el volumen `n8n_n8n_data` como arriba; luego `docker compose -f /opt/n8n/docker-compose.yml up -d`.
-Alertas: si una corrida falla, `mp-alert@backup.service` escribe en `/var/lib/mp-health/alerts.log` y en el journal (`journalctl -t mp-alert`). Supabase: los backups automáticos del proyecto `isthmus-mp` (plan Pro) se verifican en el dashboard → *Database → Backups* cuando el proyecto exista.
+Alertas: si una corrida falla, `mp-alert@backup.service` escribe en `/var/lib/mp-health/alerts.log` y en el journal (`journalctl -t mp-alert`). Supabase: los backups automáticos del proyecto `isthmus-mp` (plan Pro) se verifican en el dashboard → *Database → Backups* (proyecto creado el 02-oct-2026; primer backup diario por verificar, INVENTARIO §13).
 
 ## 7. Actualizaciones y reinicio
 

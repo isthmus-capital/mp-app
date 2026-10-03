@@ -2,3 +2,5 @@
 node_modules/
 .next/
 .superpowers/
+__pycache__/
+*.pyc

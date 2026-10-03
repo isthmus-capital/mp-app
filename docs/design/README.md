@@ -33,7 +33,7 @@ Reglas: un acento por pantalla; el acento nunca sustituye al primario en botones
 | Preset de Tailwind | Listo (se cablea en Brief 02) | `styles/tailwind.preset.ts` |
 | Página de prueba con logos, colores, tipografía e íconos | Lista | `docs/design/preview.html`, capturas `capturas/preview-390.png` y `-1440.png` |
 | 5 pantallas clave (HTML con tokens MP) | **Regeneradas con la marca MP el 02-oct-2026; pendiente la revisión en celular y la aprobación de Gianclaudio** | Fuente en `pantallas/` (`index.html` + `01`…`05`, `base.css`), capturas `capturas/0N_*-390.png` y `-1440.png`, Artifact privado para el celular: https://claude.ai/artifact/RpN6nuHhQxpaG88QvxUiRt |
-| Página de espera (Caddy 503 con marca MP, Brief 01) | Lista y copiada a `/var/www/mp-placeholder` (sin DNS todavía) | `ops/caddy/placeholder/index.html` + `mp-logo.png`, capturas `capturas/placeholder-390.png` y `-1440.png` |
+| Página de espera (Caddy 503 con marca MP, Brief 01) | En producción desde el 03-oct-2026 en `mp.` y `staging-mp.isthmuscap.com` (`/var/www/mp-placeholder`) | `ops/caddy/placeholder/index.html` + `mp-logo.png`, capturas `capturas/placeholder-390.png` y `-1440.png` |
 | Íconos PWA y favicon | **Provisionales** (recorte del PNG) | `public/icons/`, `public/favicon.ico`, `public/manifest.webmanifest` |
 
 ## Decisiones tomadas en el Brief 00 (vigentes salvo lo renombrado)

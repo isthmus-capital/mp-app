@@ -13,6 +13,7 @@ App Next.js 14 (App Router, TypeScript) corriendo en staging con la marca **MP M
 5. Layout de adaptadores vacíos en `lib/{kyc,signing,core,banking,messaging,storage,rules}/` con sus interfaces TypeScript definidas (sin implementación).
 6. Dockerfile multi-stage, servicio en `docker-compose.yml`, despliegue a staging.
 7. Playwright configurado con capturas a 390 px y 1440 px.
+8. **Heredado del Brief 01** (INVENTARIO §13 ítem 1): `/api/health` según el contrato `docs/ops/HEALTH.md` (DB, N8N, token Zoho, LoanDisk) y, al existir la ruta, habilitar `mp-healthcheck.timer` en el VPS y probar la alerta por WhatsApp al admin (`mp-alert@healthcheck`).
 
 ## Criterio de aceptación
 - `https://staging-mp.isthmuscap.com` carga los tres portales con la marca MP aplicada y el respaldo FIC en inicio de sesión y pie.

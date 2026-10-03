@@ -43,4 +43,5 @@ restic backup --quiet --tag daily "${EXCL[@]}" "${PATHS[@]}"
 restic forget --quiet --tag daily --keep-daily 14 --prune
 restic check --quiet
 date -u +%FT%TZ > /var/lib/mp-backup/last-success
-log "OK snapshot $(restic snapshots --json --latest 1 --tag daily | python3 -c 'import json,sys;print(json.load(sys.stdin)[0]["short_id"])')"
+# El más reciente de verdad: `--latest 1` devuelve uno por grupo (host, rutas) y el JSON va del más antiguo al más nuevo (revisión de cierre del Brief 01).
+log "OK snapshot $(restic snapshots --json --tag daily | python3 -c 'import json,sys;s=json.load(sys.stdin);print(max(s,key=lambda x:x["time"])["short_id"])')"

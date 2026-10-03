@@ -5,6 +5,8 @@ Wants=network-online.target
 OnFailure=mp-alert@backup.service
 [Service]
 Type=oneshot
+# restic necesita HOME para su caché (/root/.cache/restic); sin esto avisa "unable to open cache" en cada corrida del timer (hallazgo del cierre del Brief 01, 03-oct-2026).
+Environment=HOME=/root
 ExecStart=/usr/local/bin/mp-backup.sh
 Nice=10
 IOSchedulingClass=idle
