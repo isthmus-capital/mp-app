@@ -2,6 +2,8 @@
 
 <!-- Brief 01 — 02-oct-2026. Reducida el 03-oct-2026 por decisión de Gianclaudio: la rotación de la contraseña de Postgres de n8n queda FUERA de la ventana y sin fecha (R40 "aceptado temporalmente"; procedimiento conservado en ROTACION_N8N_POSTGRES.md). Claude Code no ejecuta ningún paso ni abre archivos de n8n. -->
 
+**Ejecutada el sáb 03-oct-2026, 02:33–03:00 UTC** por Gianclaudio (terminal root) con verificación de Claude Code en solo lectura. Resultado en `docs/INVENTARIO_ACTUAL.md` §0.1; R39 cerrado; criterio 2 del Brief 01 cumplido. Pendiente que dejó: kernel `7.0.0-38` retenido (R45). Este documento se conserva como procedimiento para la próxima ventana.
+
 **Orden:** pre-chequeo → `apt upgrade` (incluye `docker-ce`) → reinicio de kernel → post-reboot → verificación externa de puertos (check-host.net) → verificación de n8n, Cotizador y Max Motors.
 
 **Quién:** Gianclaudio, desde su terminal, como `root` (o `deploy` con `sudo -i`). Los comandos van en tu terminal, nunca en el chat.
@@ -20,7 +22,7 @@ docker inspect -f '{{.Name}} -> {{.HostConfig.RestartPolicy.Name}}' $(docker ps 
 
 Al 02-oct, `cotizador-app` y `maxmotors-app` están en `unless-stopped` y `gotenberg` en `always` (verificado); `n8n-n8n-1` y `n8n-postgres-1` los confirmas tú. Si alguno está en `no`: `docker update --restart unless-stopped <nombre>`.
 
-- [ ] **n8n sin ejecuciones en curso:** UI → *Executions* → ninguna en *Running*.
+- [ ] **n8n sin ejecuciones en curso:** UI → *Executions* → ninguna en *Running* (o por MCP: `search_workflow_executions` con `status` running, new y waiting debe devolver 0; así se verificó el 03-oct).
 - [ ] **Línea base y regla de firewall:**
 
 ```bash
@@ -41,7 +43,7 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::=-
 docker ps --format '{{.Names}} {{.Status}}'          # los 5 contenedores deben volver solos (restart policies)
 /opt/mp-app/scripts/ops/check-services.sh post-upgrade; echo rc=$?
 iptables -S DOCKER-USER | grep -c DROP               # debe seguir en 1
-apt list --upgradable 2>/dev/null | wc -l            # 1 (solo la cabecera)
+apt list --upgradable 2>/dev/null | wc -l            # 1 (solo la cabecera); más si hay paquetes en phasing o un kernel nuevo retenido (03-oct: 3)
 cat /var/run/reboot-required.pkgs
 ```
 
@@ -55,7 +57,7 @@ cat /var/run/reboot-required.pkgs
 /opt/mp-app/scripts/ops/check-services.sh pre-reboot && systemctl reboot
 ```
 
-Espera ~2 minutos y reconecta.
+Espera ~2 minutos y reconecta. Si hay una sesión de Claude Code abierta, corre en el propio VPS y muere con el reinicio: retómala desde el historial de la extensión de VS Code (el 03-oct se retomó sin perder contexto).
 
 ## 4. Post-reboot (5 min)
 

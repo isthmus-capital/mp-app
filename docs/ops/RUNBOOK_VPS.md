@@ -85,7 +85,7 @@ Alertas: si una corrida falla, `mp-alert@backup.service` escribe en `/var/lib/mp
 ## 7. Actualizaciones y reinicio
 
 - `unattended-upgrades` aplica solo parches de seguridad. Lo demás: `sudo apt-get update && sudo apt-get upgrade`. **`docker-ce` / `containerd.io` reinician el daemon de Docker y todos los contenedores**: hacerlo solo en ventana (ver `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md`).
-- `ls /var/run/reboot-required` indica si hace falta reiniciar. Procedimiento completo (pre-chequeo, upgrade, reinicio, post-reboot y verificaciones) en `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md`; la rotación de Postgres de n8n quedó fuera de la ventana, aplazada sin fecha (`docs/ops/ROTACION_N8N_POSTGRES.md`, R40); versión corta del reinicio: `check-services.sh pre-reboot` → `sudo systemctl reboot` → 2 min → `check-services.sh post-reboot` → `sudo iptables -S DOCKER-USER`.
+- `ls /var/run/reboot-required` indica si hace falta reiniciar. Procedimiento completo (pre-chequeo, upgrade, reinicio, post-reboot y verificaciones) en `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md`; la rotación de Postgres de n8n quedó fuera de la ventana, aplazada sin fecha (`docs/ops/ROTACION_N8N_POSTGRES.md`, R40); versión corta del reinicio: `check-services.sh pre-reboot` → `sudo systemctl reboot` → 2 min → `check-services.sh post-reboot` → `sudo iptables -S DOCKER-USER`. Última ventana ejecutada: 03-oct-2026 (`docker-ce` 29.8.2, kernel `7.0.0-34`); kernel `7.0.0-38` pendiente de instalar en otra ventana (R45).
 
 ## 8. Salud y alertas
 
