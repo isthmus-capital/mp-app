@@ -433,7 +433,7 @@ Registros de referencia (COQL, `Created_Time > 15-sep-2026`; PII omitida):
 | MP - Enviar Documentos a Firma | `6982798000005442059` | field_update sobre `Estado_Solicitud` (cualquier valor; descripción: cuando pasa a `Pendiente Firma`) | Función Deluge `mp_enviar_a_zoho_sign1` (§18) | 01-oct-2026 10:48 |
 | LoanDisk_BranchID | `6982798000008898010` | create | Hereda `LoanDisk_Branch_ID` del afiliado | 01-oct-2026 10:43 |
 
-`Afiliados` (1 regla): `Afiliados_ZohoFlow_Crear Carpetas Afiliados` (`6982798000004398001`, create, webhook a Zoho Flow; última ejecución 29-sep-2026 12:45). §4.3: este disparador pasa a N8N sobre el cambio de `Taza_de_Interes`.
+`Afiliados` (1 regla): `Afiliados_ZohoFlow_Crear Carpetas Afiliados` (`6982798000004398001`, create, webhook a Zoho Flow; última ejecución 29-sep-2026 12:45). §4.3: este disparador pasa a N8N sobre el cambio de `Taza_de_Interes`. **Lectura 03-oct-2026 (MCP, solo lectura):** la regla no tiene criterios y su acción única es el webhook a Flow; `Afiliados` no tiene field updates, tareas ni funciones, y ninguna automatización sobre `Taza_de_Interes` ni `Tasa_de_Comisi_n`; dos afiliados, ambos de prueba (`AF -0031` tasa 4, `AF-0033` tasa 24 y comisión 4), con `Estado_del_Contrato = Enviado a firma` y `Fecha_Env_o_Contrato` fijados al crearse. El interior del Flow y las funciones Deluge de botones o programadas no son visibles por MCP. Detalle en Prompt Maestro §19.14 y propuesta en RIESGOS R42.
 
 Field updates existentes: "Actualizar Estado de Solicitud" (→ `En Revision`, asociado); "Asignar Tasa Nominal 18" y "Asignar Tasa Efectiva 18" (valor fijo 18, **no asociados**).
 
