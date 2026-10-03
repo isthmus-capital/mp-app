@@ -9,10 +9,10 @@
 | Hallazgo | Severidad | Estado al cierre |
 |---|---|---|
 | C1. `mp-restore-test.sh` y `mp-backup.sh` eligen el snapshot del grupo más antiguo; la prueba sale con 0 aunque falle | Crítico | Corregido, instalado y probado el 03-oct 03:46 UTC (`rc=0`, snapshot `01b5731b`) |
-| I1. `restic snapshots *` / `restic stats *` con `NOPASSWD` admiten `--password-command` (comando como root) | Importante | Aprobado; wrapper sin argumentos en el repo, `visudo` OK; falta instalarlo (§13 ítem 9) |
+| I1. `restic snapshots *` / `restic stats *` con `NOPASSWD` admiten `--password-command` (comando como root) | Importante | Hecho: wrapper sin argumentos instalado y verificado el 03-oct (§13 ítem 9) |
 | I2. Reglas `deny` de n8n sin `Edit`/`Write` ni `docker logs/cp/volume/run` | Importante | Hecho. Además se descubrió que `Read(/opt/n8n/**)` no protegía nada: corregido a `//opt/n8n/**` (§13 ítem 10) |
 | I3. Evidencia del criterio 4 sin registrar | Importante | Registrada en INVENTARIO §0.1 |
-| I4. El runbook decía que Claude Code corre como `deploy`; corre como `root` | Importante | Decidido: `deploy` desde el Brief 02 (CLAUDE.md); traspaso en §13 ítem 11 |
+| I4. El runbook decía que Claude Code corre como `deploy`; corre como `root` | Importante | Hecho: `deploy` desde el Brief 02 (CLAUDE.md); traspaso completado el 03-oct (§13 ítem 11) |
 | I5. `Environment=HOME=/root` en `mp-backup.service` sin instalar | Importante | Instalado y cargado el 03-oct |
 | I6. `__pycache__` sin ignorar | Importante | Corregido (`.gitignore`) |
 | M1, M6, M7, M8. Textos del runbook, de la ventana y de diseño | Menor | Corregidos |
