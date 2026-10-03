@@ -41,12 +41,13 @@ Secretos: `/etc/mp-app/staging.env` y `/etc/mp-app/production.env` (640 `root:de
 
 ## 4. Caddy
 
-1. Editar `/etc/caddy/Caddyfile` (`sudo nano`). El bloque de mp-app es `ops/caddy/Caddyfile.mp.snippet` del repo (se añade al final cuando existan los registros DNS de `mp.` y `staging-mp.`).
-2. `sudo caddy validate --config /etc/caddy/Caddyfile`
-3. `sudo systemctl reload caddy` (sin corte).
-4. Logs: `/var/log/caddy/staging-mp.log`, `/var/log/caddy/mp.log`, `sudo journalctl -u caddy -n 50`.
+1. Respaldar antes: `sudo cp -a /etc/caddy/Caddyfile /root/backups/Caddyfile.$(date -u +%Y%m%dT%H%M%SZ)`. Editar `/etc/caddy/Caddyfile` (`sudo nano`). El bloque de mp-app es `ops/caddy/Caddyfile.mp.snippet` del repo, **aplicado el 03-oct-2026 (v3)**; el bloque del servidor y el snippet del repo deben ser idénticos: `awk '/^# ===== mp-app/{f=1} f' /etc/caddy/Caddyfile | diff - ops/caddy/Caddyfile.mp.snippet`.
+2. Los archivos de log del bloque deben pertenecer a `caddy`: `sudo chown caddy:caddy /var/log/caddy/mp.log /var/log/caddy/staging-mp.log`. Un `caddy validate` ejecutado como root los crea como `root:root 600` y la recarga falla con *permission denied* (ocurrió el 03-oct-2026; la reversa automática restauró el Caddyfile sin corte).
+3. `sudo caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile`
+4. `sudo systemctl reload caddy` (sin corte). Reversa: `sudo cp -a /root/backups/Caddyfile.<respaldo> /etc/caddy/Caddyfile && sudo systemctl reload caddy`, luego `scripts/ops/check-services.sh`.
+5. Logs: `/var/log/caddy/staging-mp.log`, `/var/log/caddy/mp.log`, `sudo journalctl -u caddy -n 50`.
 
-Página de espera (503 con marca) en `/var/www/mp-placeholder/` (fuente: `ops/caddy/placeholder/index.html`); Caddy la sirve cuando el contenedor no responde.
+Página de espera (503 con marca) en `/var/www/mp-placeholder/` (fuente: `ops/caddy/placeholder/`); Caddy la sirve cuando el contenedor no responde. Dentro de `handle_errors` Caddy conserva el código del error salvo que el manejador fije otro: el logo se sirve con `file_server { status 200 }` y la página con `status 503`; las cabeceras de seguridad se importan también dentro del manejador de errores (v3 del snippet, 03-oct-2026).
 
 ## 5. Firewall y SSH
 

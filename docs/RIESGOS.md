@@ -60,7 +60,7 @@ Riesgos adicionales detectados durante el inventario: R13 a R22 (CRM/Sign) y **R
 - **Brief.** 01 (hardening, Caddy), 02 (logs), 03 (RLS, auditoría), 04 (auth/OTP), 17 (verificación pública).
 - **Responsable.** Gianclaudio. **Estado:** Abierto.
 
-- **Avance Brief 01 (02-oct-2026).** Secretos de la app fuera del repo en `/etc/mp-app/*.env` (640 `root:deploy`); cabeceras de seguridad y CSP base listas en `ops/caddy/Caddyfile.mp.snippet` (se activan con el DNS el 03-oct); backups cifrados con restic.
+- **Avance Brief 01 (02-oct-2026).** Secretos de la app fuera del repo en `/etc/mp-app/*.env` (640 `root:deploy`); cabeceras de seguridad y CSP base listas en `ops/caddy/Caddyfile.mp.snippet` (se activan con el DNS el 03-oct); backups cifrados con restic. **03-oct-2026:** DNS creados y bloque de Caddy aplicado (v3): cabeceras de seguridad y CSP activas en `mp.` y `staging-mp.`, también en la página de espera 503; TLS Let's Encrypt válido hasta el 01-ene-2027.
 
 ## R05 — Caída de N8N a mitad de flujo
 - **Descripción.** N8N se reinicia o falla entre pasos (p. ej. después de crear el préstamo en LoanDisk y antes de escribir en CRM), dejando estados a medias en Supabase, CRM, LoanDisk o BG.

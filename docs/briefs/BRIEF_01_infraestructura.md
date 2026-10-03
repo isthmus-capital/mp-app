@@ -16,5 +16,5 @@ VPS Hetzner CPX31 `5.78.214.136`, Ubuntu, Docker Compose + Caddy. Hoy corre como
 ## Criterio de aceptación
 - Login root por SSH rechazado; `deploy` funciona desde VS Code Remote-SSH. — **Fase 1 cumplida 02-oct-2026** (contraseñas cerradas, root solo por llave, `deploy` funciona); el rechazo de root es la fase 2, cuando `deploy` opere Cotizador y Max Motors (plan Task 3b).
 - Cotizador y Max Motors siguen respondiendo (verificar antes y después).
-- `https://staging-mp.isthmuscap.com` responde con certificado válido.
+- `https://staging-mp.isthmuscap.com` responde con certificado válido. — **Cumplido el 03-oct-2026** (también `mp.isthmuscap.com`): Let's Encrypt hasta el 01-ene-2027, HTTP/2 503 con la página de espera MP y cabeceras de seguridad; Cotizador, Max Motors y n8n sin cambios antes y después.
 - Restauración de un backup probada en staging, con evidencia en la salida.
