@@ -8,9 +8,9 @@
   - **Fase 1 — aplicada el 02-oct-2026 17:42 UTC (Gianclaudio; `sshd -t` + `systemctl reload ssh`):** `PasswordAuthentication no`, `KbdInteractiveAuthentication no`, `PermitRootLogin prohibit-password`, `MaxAuthTries 4`, `LoginGraceTime 30`, `X11Forwarding no`. Verificado con `sshd -T` (los siete valores) y desde fuera: root sin llave → `Permission denied (publickey)`; root con llave y `deploy` → entran. Nadie entra con contraseña; `root` **sigue entrando por llave** porque Cotizador y Max Motors aún se operan como root.
   - **Fase 2 (pendiente):** `PermitRootLogin no` + `AllowUsers deploy`, cuando `deploy` sea dueño y operador de `/opt/cotizador-isthmus` y `/home/maxmotors` (plan del Brief 01, Task 3b). Desde entonces root solo por `sudo -i` desde `deploy` o por consola Hetzner.
   - Verificar lo vigente: `sudo sshd -T | grep -Ei '^(permitrootlogin|passwordauthentication|allowusers) '`.
-- **sudo:** `deploy` tiene la allowlist `MP_OPS` sin contraseña (reload/estado de Caddy, backups, journal, estados de ufw/fail2ban/iptables, `restic snapshots`) y sudo completo **con contraseña** para todo lo demás. La contraseña de `deploy` solo sirve para `sudo`, nunca para SSH; vive en el gestor de contraseñas de Gianclaudio. Claude Code (no interactivo) solo puede usar la allowlist.
+- **sudo:** `deploy` tiene la allowlist `MP_OPS` sin contraseña (reload/estado de Caddy, backups, journal, estados de ufw/fail2ban/iptables, la prueba de restauración y la lista de snapshots por el wrapper fijo `mp-restic-snapshots.sh` sin argumentos) y sudo completo **con contraseña** para todo lo demás. Desde el 03-oct-2026 no hay comodines en comandos que aceptan opciones peligrosas: `restic snapshots *` y `restic stats *` se quitaron porque admitían `--password-command`. La contraseña de `deploy` solo sirve para `sudo`, nunca para SSH; vive en el gestor de contraseñas de Gianclaudio. Claude Code (no interactivo) solo puede usar la allowlist.
 - **Recuperación si se pierde la llave:** Hetzner Cloud Console → servidor → *Console* (acceso como root por consola, no por SSH). Desde ahí: `nano /etc/ssh/sshd_config.d/00-hardening.conf` o añadir una llave a `/home/deploy/.ssh/authorized_keys`.
-- **Claude Code** corre hoy como **`root`** (`HOME=/root`): su configuración y la memoria vigentes están en `/root/.claude`. La copia en `/home/deploy/.claude` es del 02-oct-2026 y está desactualizada. Mientras corra como root, la allowlist `MP_OPS` no lo limita; el control son las reglas de `.claude/settings.json`, el clasificador y CLAUDE.md. Pasar la sesión a `deploy` (o dejarla en root) es decisión pendiente de Gianclaudio (INVENTARIO §13).
+- **Claude Code** trabaja como **`deploy`** desde el Brief 02 (decisión de Gianclaudio, 03-oct-2026; regla en CLAUDE.md), con configuración y memoria en `/home/deploy/.claude`. Las tareas de host que piden root las ejecuta Gianclaudio como root desde su terminal; Claude entrega el comando exacto y verifica en solo lectura. Hasta el cierre del Brief 01 la sesión corrió como root en `/root/.claude`. El traspaso (dueño del repo y copia de la memoria y de `settings.json` de root a `deploy`) está en INVENTARIO §13 ítem 11.
 
 ## 2. Servicios
 
@@ -73,7 +73,8 @@ sudo systemctl status mp-backup.timer                    # próxima ejecución
 sudo systemctl start mp-backup.service                    # corrida manual
 sudo journalctl -u mp-backup.service -n 30                # log
 sudo cat /var/lib/mp-backup/last-success                  # último éxito (lo lee /api/health)
-sudo bash -c 'set -a; . /etc/mp-backup/restic.env; restic snapshots'
+sudo /usr/local/bin/mp-restic-snapshots.sh               # lista de snapshots (sin contraseña, sin argumentos)
+sudo bash -c 'set -a; . /etc/mp-backup/restic.env; restic snapshots'   # igual, con la contraseña de sudo
 sudo bash -c 'set -a; . /etc/mp-backup/restic.env; restic restore latest --target /tmp/r --include /etc/caddy/Caddyfile'
 sudo /usr/local/bin/mp-restore-test.sh                    # prueba mensual: volumen de prueba + Caddyfile
 ```

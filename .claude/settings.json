@@ -6,11 +6,18 @@
       "Bash(git push origin main)"
     ],
     "deny": [
-      "Read(/opt/n8n/**)",
+      "Read(//opt/n8n/**)",
+      "Edit(//opt/n8n/**)",
       "Bash(*/opt/n8n*)",
       "Bash(docker exec*n8n*)",
       "Bash(docker inspect*n8n*)",
-      "Bash(docker compose*-f /opt/n8n*)"
+      "Bash(docker compose*-f /opt/n8n*)",
+      "Bash(docker logs*n8n*)",
+      "Bash(docker cp*n8n*)",
+      "Bash(docker volume*n8n_*)",
+      "Bash(docker run*n8n_*)",
+      "Bash(*n8n-postgres-1*)",
+      "Bash(*n8n-n8n-1*)"
     ]
   }
 }

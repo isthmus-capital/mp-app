@@ -2,18 +2,18 @@
 <!-- Paquete: v5 — 01-oct-2026 -->
 **Modo:** aprobación manual · **Duración estimada:** medio día
 
-**Estado: CERRADO el 03-oct-2026** por decisión de Gianclaudio. Criterios 2 y 3 cumplidos; criterio 1 en fase 1 (la fase 2 queda con disparador); criterio 4 ejecutado el 02-oct, con la re-verificación registrada pendiente (abajo). Lo que quedó fuera vive en **INVENTARIO §13 "Infra — pendientes post-Brief 01"**, cada ítem con su disparador.
+**Estado: CERRADO el 03-oct-2026** por decisión de Gianclaudio. Criterios 2, 3 y 4 cumplidos; criterio 1 en fase 1 (la fase 2 queda con disparador). Lo que quedó fuera vive en **INVENTARIO §13 "Infra — pendientes post-Brief 01"**, cada ítem con su disparador.
 
 **Revisión final de rama (03-oct-2026)**, revisor fresco (subagente) sobre `6e8c0c8..d9c68eb` (20 commits, 72 archivos). Veredicto: *con correcciones*. Sin deriva entre el repo y el host: los 16 artefactos instalados son idénticos byte a byte, con modos y dueños correctos. TLS, cabeceras, `sshd -T`, `DOCKER-USER`, fail2ban, el timer y el compose se verificaron en vivo. Hallazgos y destino:
 
 | Hallazgo | Severidad | Estado al cierre |
 |---|---|---|
-| C1. `mp-restore-test.sh` y `mp-backup.sh` eligen el snapshot del grupo más antiguo; la prueba sale con 0 aunque falle | Crítico | Corregido en el repo y probado con datos sintéticos; instalar y repetir la prueba (§13 ítem 8) |
-| I1. `restic snapshots *` / `restic stats *` con `NOPASSWD` admiten `--password-command` (comando como root) | Importante | Decisión de Gianclaudio (§13 ítem 9) |
-| I2. Reglas `deny` de n8n sin `Edit`/`Write` ni `docker logs/cp/volume/run` | Importante | Decisión de Gianclaudio (§13 ítem 10) |
-| I3. Evidencia del criterio 4 sin registrar | Importante | Texto corregido arriba; registro tras §13 ítem 8 |
-| I4. El runbook decía que Claude Code corre como `deploy`; corre como `root` | Importante | Runbook corregido; decisión en §13 ítem 11 |
-| I5. `Environment=HOME=/root` en `mp-backup.service` sin instalar | Importante | En el repo; instalar (§13 ítem 8) |
+| C1. `mp-restore-test.sh` y `mp-backup.sh` eligen el snapshot del grupo más antiguo; la prueba sale con 0 aunque falle | Crítico | Corregido, instalado y probado el 03-oct 03:46 UTC (`rc=0`, snapshot `01b5731b`) |
+| I1. `restic snapshots *` / `restic stats *` con `NOPASSWD` admiten `--password-command` (comando como root) | Importante | Aprobado; wrapper sin argumentos en el repo, `visudo` OK; falta instalarlo (§13 ítem 9) |
+| I2. Reglas `deny` de n8n sin `Edit`/`Write` ni `docker logs/cp/volume/run` | Importante | Hecho. Además se descubrió que `Read(/opt/n8n/**)` no protegía nada: corregido a `//opt/n8n/**` (§13 ítem 10) |
+| I3. Evidencia del criterio 4 sin registrar | Importante | Registrada en INVENTARIO §0.1 |
+| I4. El runbook decía que Claude Code corre como `deploy`; corre como `root` | Importante | Decidido: `deploy` desde el Brief 02 (CLAUDE.md); traspaso en §13 ítem 11 |
+| I5. `Environment=HOME=/root` en `mp-backup.service` sin instalar | Importante | Instalado y cargado el 03-oct |
 | I6. `__pycache__` sin ignorar | Importante | Corregido (`.gitignore`) |
 | M1, M6, M7, M8. Textos del runbook, de la ventana y de diseño | Menor | Corregidos |
 | M2–M5, M11, M13. Mejoras de scripts y del host | Menor | §13 ítem 12 |
@@ -34,4 +34,4 @@ VPS Hetzner CPX31 `5.78.214.136`, Ubuntu, Docker Compose + Caddy. Hoy corre como
 - Login root por SSH rechazado; `deploy` funciona desde VS Code Remote-SSH. — **Fase 1 cumplida 02-oct-2026** (contraseñas cerradas, root solo por llave, `deploy` funciona); el rechazo de root es la fase 2, cuando `deploy` opere Cotizador y Max Motors (plan Task 3b) → INVENTARIO §13 ítem 2.
 - Cotizador y Max Motors siguen respondiendo (verificar antes y después). — **Cumplido el 03-oct-2026** en la ventana de mantenimiento: 307/307 antes, entre pasos y después (`check-services.sh` pre-ventana, pre/post-upgrade y pre/post-reboot), cotizaciones cargadas en ambos sitios, n8n normal, puertos de Docker en timeout desde ~60 nodos de check-host.net (R39 cerrado).
 - `https://staging-mp.isthmuscap.com` responde con certificado válido. — **Cumplido el 03-oct-2026** (también `mp.isthmuscap.com`): Let's Encrypt hasta el 01-ene-2027, HTTP/2 503 con la página de espera MP y cabeceras de seguridad; Cotizador, Max Motors y n8n sin cambios antes y después.
-- Restauración de un backup probada en staging, con evidencia en la salida. — **Ejecutada el 02-oct-2026 ~03:57 UTC** (plan Task 7, `ops/backup/mp-restore-test.sh`; snapshot `a2d407f6` de esa corrida en el repositorio restic), pero **su salida literal no quedó registrada** en ningún documento versionado. La revisión de cierre (03-oct) encontró además que el script elegía mal el snapshot y salía con 0 aunque la comparación fallara; corregido en el repo el 03-oct. **Pendiente: instalar el script corregido, repetir la prueba y pegar las dos líneas `RESTORE … OK` en INVENTARIO §0.1** (§13 ítem 8). El clasificador no deja a Claude Code ejecutarla.
+- Restauración de un backup probada en staging, con evidencia en la salida. — **Cumplido el 03-oct-2026 03:46 UTC.** La primera corrida (02-oct ~03:57 UTC, snapshot `a2d407f6`) no dejó la salida registrada, y la revisión de cierre encontró que el script elegía mal el snapshot y salía con 0 aunque fallara. Con el script corregido e instalado, Gianclaudio la repitió: `RESTORE volumen OK (snapshot 01b5731b)`, `RESTORE Caddyfile OK`, `rc=0`; `01b5731b` es el snapshot más reciente del repositorio (evidencia completa en INVENTARIO §0.1). Queda como prueba mensual (`RUNBOOK_VPS.md` §6).
