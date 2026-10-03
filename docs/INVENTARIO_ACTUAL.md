@@ -315,7 +315,7 @@ CRM Solicitudes_Microprestamo.Tasa_Nominal = Tasa_Efectiva (percent)
 ```
 
 Evidencia:
-- AF-0033 "Prueba Inc." tiene `Taza_de_Interes = 24`; sus solicitudes SO-00077, SO-00078 y SO-00079 tienen `Tasa_Nominal = Tasa_Efectiva = 24`. AF-0031 "Acme Corporation Inc." tiene `Taza_de_Interes = 4`.
+- AF-0033 "Prueba Inc." tiene `Taza_de_Interes = 24`; sus solicitudes SO-00077, SO-00078 y SO-00079 tienen `Tasa_Nominal = Tasa_Efectiva = 24`. AF-0031 "Acme Corporation Inc." tenía `Taza_de_Interes = 4` (24 desde el 02-oct-2026 20:07, corregida por Gianclaudio; afiliado de prueba).
 - Las acciones de campo "Asignar Tasa Nominal 18" y "Asignar Tasa Efectiva 18" (valor fijo 18, creadas 04/05-may-2026) existen pero están **desasociadas** (`associated: false`): la tasa fija de la v0 ya no aplica. Confirma §16.2.
 - Ninguna regla de workflow de CRM copia la tasa del afiliado a la solicitud. El 05 v2 la lee ya puesta en `Tasa_Nominal`; un comentario del nodo dice que "el Flow" la copia desde el afiliado, es decir, Zoho Flow / Creator al crear la solicitud (se confirma con el código Deluge, §7). El 05 v2 **no valida** la tasa contra el rango del producto (18–30) ni contra parámetros.
 
@@ -360,7 +360,7 @@ Módulos: `Afiliados` (id `6982798000002954562`), `Solicitudes_Microprestamo` (i
 | `Nombre_Comercial` | Nombre Comercial | text | |
 | `Estado` | Estado | picklist | `Activo`, `Inactivo`, `Suspendido`. **Vacío** en los dos afiliados. |
 | `Estado_del_Contrato` | Estado del Contrato | picklist | `Pendiente`, `Enviado a firma`, `Firmado Afiliado`, `Firmado Completo`. Ambos afiliados: `Enviado a firma`. §16.4: el convenio se firma en físico; la app marcará `Firmado`. |
-| `Taza_de_Interes` | Taza de Interes | percent | Fuente única de la tasa (§4.4). AF-0033 = 24, AF-0031 = 4 |
+| `Taza_de_Interes` | Taza de Interes | percent | Fuente única de la tasa (§4.4). AF-0033 = 24, AF-0031 = 24 (era 4 hasta el 02-oct-2026 20:07) |
 | `Tasa_de_Comisi_n` | Tasa de Comisión | percent | AF-0033 = 4 |
 | `Frecuencia_de_Planilla` | Frecuencia de Planilla | multiselectpicklist | `Semanal`, `Quincenal 10-25`, `Quincenal 15-30` |
 | `LoanDisk_Branch_ID` | LoanDisk Branch ID | text | 92588 / 91008 |
@@ -380,7 +380,7 @@ Módulos: `Afiliados` (id `6982798000002954562`), `Solicitudes_Microprestamo` (i
 
 El Número Único de Cliente **ya existe** en CRM como **`Contacts.C_digo_nico`** (etiqueta "Código único", text 255, custom, **sin restricción de unicidad**), formato `IS-00NNNN` (p. ej. `IS-004408`); 69 contactos lo tienen al 02-oct-2026 y la numeración no sigue el orden de creación (se asigna fuera de CRM o al convertir el lead). `Expedientes` (otra línea de negocio) tiene el mismo campo. **No hay** campo NUC en `Solicitudes_Microprestamo` ni en `Afiliados`, ni lookup de la solicitud a `Contacts`: hoy el enlace solo puede hacerse por cédula (`Solicitudes_Microprestamo.C_dula_ID` ↔ `Contacts.C_dula_o_Pasaporte`). **Propuesta (no crear campo nuevo):** `ensure_cliente(cedula)` busca el `Contact` por cédula, lee o asigna `C_digo_nico` con la misma secuencia `IS-`, y el Brief 05 añade a `Solicitudes_Microprestamo` un lookup `Contacto` (cambio en CRM con aprobación) para dejar de depender de la cédula como llave. Pendiente Gianclaudio: confirmar que `IS-00NNNN` es el NUC oficial y quién asigna la secuencia.
 
-Afiliados existentes (COQL, `ID_Afiliado is not null`): 2 registros, ambos de prueba: `AF -0031` Acme Corporation Inc. (18-may-2026, branch 91008, tasa 4) y `AF-0033` Prueba Inc. (29-sep-2026, branch 92588, tasa 24, comisión 4, ciclo 10-25). El afiliado real del piloto se definirá al momento de la prueba (§4.3-bis).
+Afiliados existentes (COQL, `ID_Afiliado is not null`): 2 registros, ambos de prueba: `AF -0031` Acme Corporation Inc. (18-may-2026, branch 91008, tasa 4 → 24 el 02-oct-2026 20:07) y `AF-0033` Prueba Inc. (29-sep-2026, branch 92588, tasa 24, comisión 4, ciclo 10-25). El afiliado real del piloto se definirá al momento de la prueba (§4.3-bis).
 
 ### 6.2 `Solicitudes_Microprestamo` — campos relevantes
 
@@ -433,7 +433,7 @@ Registros de referencia (COQL, `Created_Time > 15-sep-2026`; PII omitida):
 | MP - Enviar Documentos a Firma | `6982798000005442059` | field_update sobre `Estado_Solicitud` (cualquier valor; descripción: cuando pasa a `Pendiente Firma`) | Función Deluge `mp_enviar_a_zoho_sign1` (§18) | 01-oct-2026 10:48 |
 | LoanDisk_BranchID | `6982798000008898010` | create | Hereda `LoanDisk_Branch_ID` del afiliado | 01-oct-2026 10:43 |
 
-`Afiliados` (1 regla): `Afiliados_ZohoFlow_Crear Carpetas Afiliados` (`6982798000004398001`, create, webhook a Zoho Flow; última ejecución 29-sep-2026 12:45). §4.3: este disparador pasa a N8N sobre el cambio de `Taza_de_Interes`. **Lectura 03-oct-2026 (MCP, solo lectura):** la regla no tiene criterios y su acción única es el webhook a Flow; `Afiliados` no tiene field updates, tareas ni funciones, y ninguna automatización sobre `Taza_de_Interes` ni `Tasa_de_Comisi_n`; dos afiliados, ambos de prueba (`AF -0031` tasa 4, `AF-0033` tasa 24 y comisión 4), con `Estado_del_Contrato = Enviado a firma` y `Fecha_Env_o_Contrato` fijados al crearse. El interior del Flow y las funciones Deluge de botones o programadas no son visibles por MCP. Detalle en Prompt Maestro §19.14 y propuesta en RIESGOS R42.
+`Afiliados` (1 regla): `Afiliados_ZohoFlow_Crear Carpetas Afiliados` (`6982798000004398001`, create, webhook a Zoho Flow; última ejecución 29-sep-2026 12:45). §4.3: este disparador pasa a N8N sobre el cambio de `Taza_de_Interes`. **Lectura 03-oct-2026 (MCP, solo lectura):** la regla no tiene criterios y su acción única es el webhook a Flow; `Afiliados` no tiene field updates, tareas ni funciones, y ninguna automatización sobre `Taza_de_Interes` ni `Tasa_de_Comisi_n`; dos afiliados, ambos de prueba (`AF -0031` tasa 24 desde el 02-oct-2026 20:07, antes 4; `AF-0033` tasa 24 y comisión 4), con `Estado_del_Contrato = Enviado a firma` y `Fecha_Env_o_Contrato` fijados al crearse. **Verificado a mano y por MCP por Gianclaudio el 03-oct-2026:** el Flow "Crear Carpetas Afiliados" dispara en "New module entry" (solo creación). El contrato del afiliado se genera con el **botón manual "Generar contrato"** de la ficha, que llama al webhook de merge de la plantilla Writer "Convenio privado Afiliados"; no hay automatización por edición. La edición de `Taza_de_Interes` en AF-0031 (4 → 24, 02-oct-2026 20:07) no disparó nada: timeline sin `automation_details` y `Estado_del_Contrato` sin cambios. Nota: dos COQL por MCP devolvieron el valor anterior de AF-0031 (RIESGOS R44). Detalle en Prompt Maestro §19.14; propuesta aprobada para el Brief 05 en RIESGOS R42.
 
 Field updates existentes: "Actualizar Estado de Solicitud" (→ `En Revision`, asociado); "Asignar Tasa Nominal 18" y "Asignar Tasa Efectiva 18" (valor fijo 18, **no asociados**).
 
@@ -447,6 +447,7 @@ Webhooks: los dos de Zoho Flow (uno por módulo), `POST` a `flow.zoho.com/901020
 | Función de "Calcular Fecha Inicio Descuento" | Regla CRM create_or_edit | Escribe `Fecha_Inicio_Descuento` = próxima fecha de planilla estrictamente posterior según `Frecuencia_de_Planilla` del afiliado (resultado 2026-10-10 para 29-sep/30-sep/01-oct con 10-25). Se replica con la regla §4.6-b y sus tests (Brief 06). | Pendiente (no expuesto por API; opcional, la regla ya está formalizada en §4.6-b). |
 | `procesarCSVEnCreator` | Zoho Flow / Creator | Upsert de la Base Diaria en Creator `Empleados` | **No se documenta**: Creator se retira (decisión 02-oct-2026). |
 | Copia de la tasa afiliado → solicitud | Zoho Flow / Creator al crear la solicitud (comentario en el 05 v2) | Ver §4 | Pendiente de confirmar en Deluge |
+| Botón "Generar contrato" (ficha de `Afiliados`) | Manual, desde la ficha del afiliado | Llama al webhook de merge de la plantilla Writer "Convenio privado Afiliados". Única vía por la que se genera el convenio; no hay automatización por edición (verificado por Gianclaudio el 03-oct-2026). La app lo reemplaza con `mp_afiliado_alta` (Prompt Maestro §8, R42). | n/a (botón, no Deluge) |
 
 ## 8. Zoho Sign — templates
 
