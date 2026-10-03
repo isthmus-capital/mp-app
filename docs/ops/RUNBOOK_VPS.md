@@ -58,10 +58,10 @@ Página de espera (503 con marca) en `/var/www/mp-placeholder/` (fuente: `ops/ca
 
 ## 6. Backups (Hetzner y restic)
 
-- **Backups de Hetzner:** el VPS tiene los Backups de Hetzner activos desde el inicio (copia del servidor entero, gestionada desde el panel de Hetzner). **No hace falta un snapshot manual antes de una ventana de mantenimiento.** Para cambios en una base de datos (por ejemplo la rotación de Postgres de n8n) se sigue haciendo el dump lógico previo, porque la copia del servidor no es consistente a nivel de base de datos. restic (abajo) es para restauraciones granulares: un archivo, un volumen o un dump, sin revertir el disco completo.
+- **Backups de Hetzner:** el VPS tiene los Backups de Hetzner activos desde el inicio (copia del servidor entero, gestionada desde el panel de Hetzner; cuestan ~20 % del precio del servidor). **Cubren el escenario de pérdida del servidor**; por eso el Storage Box externo queda **aplazado sin fecha** (decisión de Gianclaudio, 03-oct-2026) y restic sigue en el repositorio local del propio VPS. **No hace falta un snapshot manual antes de una ventana de mantenimiento.** Para cambios en una base de datos (por ejemplo la rotación de Postgres de n8n, hoy aplazada) se sigue haciendo el dump lógico previo, porque la copia del servidor no es consistente a nivel de base de datos. restic (abajo) es para restauraciones granulares: un archivo, un volumen o un dump, sin revertir el disco completo.
 - **Qué:** volúmenes Docker con nombre (tar en caliente), configuración del host (`/etc/caddy`, `/etc/ssh/sshd_config.d`, `/etc/sudoers.d`, `/etc/fail2ban/jail.local`, `/etc/ufw/after.rules`, unidades `mp-*`), `/opt/mp-app`, `/etc/mp-app`, `/etc/mp-backup`, `/root/backups`, compose de Cotizador y Max Motors. Con `MP_BACKUP_INCLUDE_N8N=1`: además volúmenes `n8n_*`, `pg_dumpall` del Postgres de n8n y la carpeta del compose de n8n.
 - **Cuándo:** `mp-backup.timer` diario 08:00 UTC (03:00 Panamá). Retención 14 días (`--keep-daily 14`). Cifrado y deduplicado por restic.
-- **Dónde:** `RESTIC_REPOSITORY` en `/etc/mp-backup/restic.env` (600 root). Al 02-oct-2026 es local (`/var/backups/restic-local`) hasta que exista el Storage Box de Hetzner; entonces se cambia a `sftp:uXXXXXX@uXXXXXX.your-storagebox.de:/restic-isthmus`, se añade a `/root/.ssh/config` un bloque `Host uXXXXXX.your-storagebox.de` / `Port 23` / `IdentityFile /root/.ssh/id_ed25519_storagebox`, y se corre `restic init` una vez. La llave pública está en `/root/.ssh/id_ed25519_storagebox.pub`.
+- **Dónde:** `RESTIC_REPOSITORY` en `/etc/mp-backup/restic.env` (600 root). Es local (`/var/backups/restic-local`). El Storage Box de Hetzner queda **aplazado sin fecha** (03-oct-2026): los Backups de Hetzner cubren la pérdida del servidor. Si algún día se contrata, se cambia a `sftp:uXXXXXX@uXXXXXX.your-storagebox.de:/restic-isthmus`, se añade a `/root/.ssh/config` un bloque `Host uXXXXXX.your-storagebox.de` / `Port 23` / `IdentityFile /root/.ssh/id_ed25519_storagebox`, y se corre `restic init` una vez. La llave pública está en `/root/.ssh/id_ed25519_storagebox.pub`.
 - **Contraseña del repositorio:** `RESTIC_PASSWORD` en `restic.env`; copia en el gestor de contraseñas de Gianclaudio (`sudo grep RESTIC_PASSWORD /etc/mp-backup/restic.env`). Sin ella los backups son irrecuperables.
 - **n8n (decisión D3):** `MP_BACKUP_INCLUDE_N8N` empieza en `0`. Gianclaudio ejecuta la primera corrida completa con `sudo MP_BACKUP_INCLUDE_N8N_OVERRIDE=1 /usr/local/bin/mp-backup.sh`, prueba la restauración de n8n (abajo) y después pone `MP_BACKUP_INCLUDE_N8N=1` en `restic.env`. Claude Code no ejecuta ni inspecciona esa parte.
 
@@ -84,7 +84,7 @@ Alertas: si una corrida falla, `mp-alert@backup.service` escribe en `/var/lib/mp
 ## 7. Actualizaciones y reinicio
 
 - `unattended-upgrades` aplica solo parches de seguridad. Lo demás: `sudo apt-get update && sudo apt-get upgrade`. **`docker-ce` / `containerd.io` reinician el daemon de Docker y todos los contenedores**: hacerlo solo en ventana (ver `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md`).
-- `ls /var/run/reboot-required` indica si hace falta reiniciar. Procedimiento completo (dump, rotación de Postgres de n8n, upgrade, reinicio y verificación externa) en `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md`; versión corta del reinicio: `check-services.sh pre-reboot` → `sudo systemctl reboot` → 2 min → `check-services.sh post-reboot` → `sudo iptables -S DOCKER-USER`.
+- `ls /var/run/reboot-required` indica si hace falta reiniciar. Procedimiento completo (pre-chequeo, upgrade, reinicio, post-reboot y verificaciones) en `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md`; la rotación de Postgres de n8n quedó fuera de la ventana, aplazada sin fecha (`docs/ops/ROTACION_N8N_POSTGRES.md`, R40); versión corta del reinicio: `check-services.sh pre-reboot` → `sudo systemctl reboot` → 2 min → `check-services.sh post-reboot` → `sudo iptables -S DOCKER-USER`.
 
 ## 8. Salud y alertas
 
@@ -99,11 +99,11 @@ Alertas: si una corrida falla, `mp-alert@backup.service` escribe en `/var/lib/mp
 |---|---|---|
 | Variables de mp-app (WhatsApp, Supabase, N8N, Zoho, LoanDisk…) | `/etc/mp-app/staging.env`, `/etc/mp-app/production.env` | 640 `root:deploy` |
 | Repositorio restic | `/etc/mp-backup/restic.env` | 600 root |
-| Llave SFTP del Storage Box | `/root/.ssh/id_ed25519_storagebox` | 600 root |
+| Llave SFTP del Storage Box (sin uso: Storage Box aplazado sin fecha) | `/root/.ssh/id_ed25519_storagebox` | 600 root |
 | Token de GitHub (git push) | `/home/deploy/.git-credentials` | 600 deploy |
 | Credenciales de N8N y Zoho | dentro de n8n (credenciales) | Gianclaudio |
 
-Nunca en el repo, briefs, logs ni chat. Rotación del token de WhatsApp: Brief 04. Rotación de la contraseña de Postgres de n8n: `docs/ops/VENTANA_MANTENIMIENTO_FINDE.md` §2.
+Nunca en el repo, briefs, logs ni chat. Rotación del token de WhatsApp: Brief 04. Rotación de la contraseña de Postgres de n8n: aplazada sin fecha (R40 aceptado temporalmente, 03-oct-2026); procedimiento en `docs/ops/ROTACION_N8N_POSTGRES.md`.
 
 ## 10. Escalamiento
 

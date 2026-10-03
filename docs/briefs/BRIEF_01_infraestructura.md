@@ -8,7 +8,7 @@ VPS Hetzner CPX31 `5.78.214.136`, Ubuntu, Docker Compose + Caddy. Hoy corre como
 ## Tareas
 1. Usuario `deploy` no-root con sudo limitado; acceso por llave SSH; deshabilitar login root por SSH y password auth.
 2. `fail2ban`, `ufw` (22, 80, 443), actualizaciones de seguridad con ventana de reinicio coordinada.
-3. Backups: volúmenes Docker a almacenamiento externo (diario, retención 14 días) y verificación de los backups automáticos de Supabase.
+3. Backups: volúmenes Docker a almacenamiento externo (diario, retención 14 días) y verificación de los backups automáticos de Supabase. — **03-oct-2026:** el Storage Box externo queda aplazado sin fecha; los Backups de Hetzner (activos) cubren la pérdida del servidor y restic queda local con retención 14 días (runbook §6).
 4. Caddy: `mp.isthmuscap.com` y `staging-mp.isthmuscap.com` (puerto 3013) con TLS, HSTS, cabeceras de seguridad y CSP base.
 5. `docker-compose.yml` con el servicio `mp-app` (build, healthcheck, `restart: unless-stopped`, límites de memoria) y su `.env` fuera del repo.
 6. `/api/health` que verifique DB, N8N, token Zoho y LoanDisk; alerta por WhatsApp al admin si falla.
